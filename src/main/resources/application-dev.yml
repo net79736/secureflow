@@ -11,7 +11,7 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:movie}?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:security}?characterEncoding=UTF-8&serverTimezone=UTC
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -30,11 +30,9 @@ public class CustomValidationAdvice {
 
     @Around("postMapping() || putMapping() || deleteMapping()") // joinPoint 의 전후 제어
     public Object validationAdvice(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-        System.out.println("여기 들어와야지요 .....ㅅㅂㅅㅂㅅㅂㅅㅂ");
         Object[] args = proceedingJoinPoint.getArgs(); // JoinPoint의 매개변수
         for (Object arg : args) {
             if (arg instanceof BindingResult) {
-                System.out.println("여기 들어와야지요 .....ㅅㅂㅅㅂㅅㅂㅅㅂ1234");
                 BindingResult bindingResult = (BindingResult) arg;
 
                 if (bindingResult.hasErrors()) {

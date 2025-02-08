@@ -24,6 +24,8 @@ class ApiControllerAdvice extends ResponseEntityExceptionHandler {
         switch (e.getErrorType().getCode()) {
             case NOT_FOUND -> status = HttpStatus.NOT_FOUND;
             case BAD_REQUEST -> status = HttpStatus.BAD_REQUEST;
+            case FORBIDDEN -> status = HttpStatus.FORBIDDEN;
+            case UNAUTHORIZED -> status = HttpStatus.UNAUTHORIZED;
             default -> status = HttpStatus.OK;
         }
 

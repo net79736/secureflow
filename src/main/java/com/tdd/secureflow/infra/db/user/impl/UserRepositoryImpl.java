@@ -32,4 +32,9 @@ public class UserRepositoryImpl implements UserRepository {
         return userJpaRepository.findByEmail(email)
                 .orElseThrow(() -> new CoreException(USER_NOT_FOUND));
     }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userJpaRepository.existsByEmail(email);
+    }
 }

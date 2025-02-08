@@ -25,6 +25,7 @@ public enum ErrorType implements IErrorType {
         USER_NOT_FOUND(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다.", LogLevel.WARN),
         INVALID_CREDENTIALS(ErrorCode.UNAUTHORIZED, "잘못된 자격 증명입니다.", LogLevel.WARN),
         ACCOUNT_LOCKED(ErrorCode.FORBIDDEN, "계정이 잠겨 있습니다.", LogLevel.WARN),
+        ACCOUNT_ALREADY_EXISTS(ErrorCode.FORBIDDEN, "이미 존재하는 계정입니다.", LogLevel.WARN),
         ACCOUNT_DISABLED(ErrorCode.FORBIDDEN, "계정이 비활성화되었습니다.", LogLevel.WARN),
         USER_ID_MUST_NOT_BE_NULL(ErrorCode.BAD_REQUEST, "사용자 ID는 null일 수 없습니다.", LogLevel.WARN);
 
