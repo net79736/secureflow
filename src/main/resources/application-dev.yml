@@ -1,6 +1,12 @@
 spring:
   application:
     name: movie
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    check-template-location: true
+    mode: HTML5
   config:
     activate:
       on-profile: dev

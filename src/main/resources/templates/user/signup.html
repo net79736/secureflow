@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorator="layout/default"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #007bff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .navbar a:hover {
+            color: #d4e2ff;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .container h2 {
+            margin-bottom: 30px;
+            color: #333333;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .form-group input {
+            width: calc(100% - 110px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group .inline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group button {
+            white-space: nowrap;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <a href="/">MyApp</a>
+        </div>
+        <div class="auth">
+            <a href="/login">로그인</a>
+            <a href="/signup">회원가입</a>
+        </div>
+    </div>
+
+    <div layout:fragment="content">
+        <div class="container">
+            <h2>회원가입</h2>
+            <form action="/signupProcess" method="post">
+                <div class="form-group inline">
+                    <label for="email">아이디 (이메일)</label>
+                    <div style="display: flex; width: 100%;">
+                        <input type="email" id="email" name="email" placeholder="이메일 입력">
+                        <button type="button" style="margin-left: 10px;">이메일 인증</button>
+                    </div>
+                </div>
+                <div class="form-group inline">
+                    <label for="verificationCode">인증번호</label>
+                    <div style="display: flex; width: 100%;">
+                        <input type="text" id="verificationCode" name="verificationCode" placeholder="인증번호 입력">
+                        <button type="button" style="margin-left: 10px;">인증 확인</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">패스워드</label>
+                    <input type="password" id="password" name="password" placeholder="패스워드 입력">
+                </div>
+                <div class="form-group">
+                    <label for="password">패스워드 확인</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="패스워드 확인 입력">
+                </div>
+                <div class="form-group">
+                    <label for="nickname">닉네임</label>
+                    <input type="text" id="nickname" name="nickname" placeholder="닉네임 입력">
+                </div>
+                <button type="submit" class="submit-btn">회원가입</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
