@@ -15,16 +15,15 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.tdd.secureflow.domain.support.error.ErrorType.Email.EMAIL_SEND_FAILED;
-import static com.tdd.secureflow.domain.support.error.ErrorType.INTERNAL_SERVER_ERROR;
+import static com.tdd.secureflow.domain.support.error.ErrorType.Email.*;
+import static java.time.LocalDateTime.now;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class VerifyMailSender {
+public class EmailVerificationSender {
     @Value("${SENDER_EMAIL}")
     private String senderEmail;
     private final JavaMailSender javaMailSender;
@@ -53,7 +52,7 @@ public class VerifyMailSender {
     // 인증번호를 생성한다.
     private EmailVerificationCode createNumber() {
         int code = (int) (Math.random() * 900000) + 100000; // 6자리 인증 코드
-        LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
+        LocalDateTime expirationTime = now().plusMinutes(EXPIRATION_MINUTES);
         return new EmailVerificationCode(String.valueOf(code), expirationTime);
     }
 
@@ -71,25 +70,26 @@ public class VerifyMailSender {
             message.setText(body, "UTF-8", "html");
         } catch (MessagingException e) {
             log.error("이메일 생성 중 에러가 발생하였습니다. 에러 메시지 : {}", e.getMessage());
-            throw new CoreException(INTERNAL_SERVER_ERROR, e.getMessage());
+            throw new CoreException(EMAIL_SEND_FAILED, e.getMessage());
         }
 
         return message;
     }
 
     // 인증번호가 유효한지 검사한다.
-    public boolean isCodeValid(String email, String inputCode) {
+    public void validateVerificationCode(String email, String inputCode) {
         EmailVerificationCode storedCode = codeStorage.get(email);
 
-        if (storedCode == null || LocalDateTime.now().isAfter(storedCode.getExpirationTime())) {
-            return false; // 코드가 없거나 만료된 경우
+        if (storedCode == null || now().isAfter(storedCode.getExpirationTime())) {
+            // return false; // 코드가 없거나 만료된 경우
+            throw new CoreException(EMAIL_CODE_NOT_FOUND);
         }
 
-        log.debug("검증 중.......");
         log.debug("stored code {}", storedCode.getCode());
         log.debug("inputCode {}", inputCode);
-
-        return Objects.equals(storedCode.getCode(), inputCode); // 코드가 일치하면 유효
+        if (!storedCode.getCode().equals(inputCode)) {
+            throw new CoreException(EMAIL_CODE_MISMATCH);
+        }
     }
 
     // 메일 내용을 작성한다.
@@ -111,7 +111,7 @@ public class VerifyMailSender {
     public void clearExpiredCodes() {
         log.debug("만료된 코드 제거 로직 START");
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = now();
         codeStorage.entrySet().removeIf(entry -> now.isAfter(entry.getValue().getExpirationTime()));
 
         log.debug("만료된 코드 제거 로직 END");

@@ -25,6 +25,8 @@ public class MyInfoControllerDto {
     }
 
     public record SignUpResponse(
+            String code,
+            String message,
             UserResponse userResponse
     ) {
 

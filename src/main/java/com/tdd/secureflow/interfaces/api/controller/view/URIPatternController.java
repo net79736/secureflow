@@ -1,4 +1,4 @@
-package com.tdd.secureflow.interfaces.api.controller.impl;
+package com.tdd.secureflow.interfaces.api.controller.view;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

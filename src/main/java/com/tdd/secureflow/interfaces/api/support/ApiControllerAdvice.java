@@ -30,7 +30,8 @@ class ApiControllerAdvice extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(
                 new ErrorResponse(
                         e.getErrorType().getCode().name(),
-                        e.getErrorType().getMessage()
+                        e.getErrorType().getMessage(),
+                        e.getData()
                 ),
                 status
         );
@@ -41,6 +42,6 @@ class ApiControllerAdvice extends ResponseEntityExceptionHandler {
         log.error("Unhandled exception occurred", e);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("500", "에러가 발생했습니다."));
+                .body(new ErrorResponse("500", "에러가 발생했습니다.", null));
     }
 }

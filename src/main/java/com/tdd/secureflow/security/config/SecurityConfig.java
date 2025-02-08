@@ -42,7 +42,7 @@ public class SecurityConfig {
     /* member 접근 권한 */
     private static final String[] PERMIT_MEMBER_URLS = new String[]{};
 
-    @Value("${FRONT_URL:http://localhost:3000}")
+    @Value("${FRONT_URL:http://localhost:8080}")
     private String frontUrl;
     private final JwtProvider jwtProvider;
     private final WebConfig webConfig;
@@ -112,7 +112,7 @@ public class SecurityConfig {
                 authorizeRequests
                         .requestMatchers(PERMIT_ALL_URLS).permitAll()
                         .requestMatchers(PERMIT_ADMIN_URLS).hasAnyAuthority(UserRole.ADMIN.name())
-                        .anyRequest().authenticated()                   // 나머지 요청은 모두 허용
+                        .anyRequest().permitAll()                   // 나머지 요청은 모두 허용
         );
 
         return http.build();

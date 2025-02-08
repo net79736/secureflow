@@ -1,8 +1,9 @@
 package com.tdd.secureflow.interfaces.api.support;
 
-public record ErrorResponse(
+public record ErrorResponse<T>(
         String code,
-        String message
+        String message,
+        T data
 ) {
 
 }

@@ -83,6 +83,7 @@ public enum ErrorType implements IErrorType {
         INVALID_EMAIL_FORMAT(ErrorCode.BAD_REQUEST, "올바르지 않은 이메일 형식입니다.", LogLevel.WARN),
         EMAIL_CODE_EXPIRED(ErrorCode.UNAUTHORIZED, "이메일 인증 코드가 만료되었습니다.", LogLevel.WARN),
         EMAIL_CODE_MISMATCH(ErrorCode.UNAUTHORIZED, "이메일 인증 코드가 일치하지 않습니다.", LogLevel.WARN),
+        EMAIL_CODE_NOT_FOUND(ErrorCode.UNAUTHORIZED, "이메일 인증 코드가 존재하지 않습니다.", LogLevel.WARN),
         EMAIL_NOT_FOUND(ErrorCode.NOT_FOUND, "등록된 이메일을 찾을 수 없습니다.", LogLevel.WARN);
 
         private final ErrorCode code;

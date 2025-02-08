@@ -105,6 +105,10 @@
         .submit-btn:hover {
             background-color: #218838;
         }
+
+        .message {
+            color: red; /* 글자 색을 붉게 설정 */
+        }
     </style>
 </head>
 
@@ -122,19 +126,19 @@
     <div layout:fragment="content">
         <div class="container">
             <h2>회원가입</h2>
-            <form action="/signupProcess" method="post">
+            <form id="signupForm">
                 <div class="form-group inline">
                     <label for="email">아이디 (이메일)</label>
                     <div style="display: flex; width: 100%;">
                         <input type="email" id="email" name="email" placeholder="이메일 입력">
-                        <button type="button" style="margin-left: 10px;">이메일 인증</button>
+                        <button id="emailVerifyBtn" type="button" style="margin-left: 10px;">이메일 인증</button>
                     </div>
                 </div>
                 <div class="form-group inline">
                     <label for="verificationCode">인증번호</label>
                     <div style="display: flex; width: 100%;">
                         <input type="text" id="verificationCode" name="verificationCode" placeholder="인증번호 입력">
-                        <button type="button" style="margin-left: 10px;">인증 확인</button>
+                        <button id="codeVerifyBtn" type="button" style="margin-left: 10px;">인증 확인</button>
                     </div>
                 </div>
                 <div class="form-group">
@@ -151,8 +155,106 @@
                 </div>
                 <button type="submit" class="submit-btn">회원가입</button>
             </form>
+
+            <!-- 메시지 출력 영역 -->
+            <div id="message" class="message"></div>
         </div>
     </div>
+    <!-- Axios 스크립트 여기로 이동 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.getElementById('emailVerifyBtn').addEventListener('click', function () {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                displayMessage('이메일을 입력해주세요.', 'error');
+                return;
+            }
+
+            axios.post('/api/verification/send', {
+                email: email
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true
+            })
+                    .then(response => {
+                        displayMessage('이메일 인증 코드가 전송되었습니다!', 'success');
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        const errorMsg = error.response?.data?.message || '이메일 인증 중 오류가 발생했습니다.';
+                        displayMessage(errorMsg, 'error');
+                    });
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // 폼 기본 제출 막기
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const nickname = document.getElementById('nickname').value;
+
+            // 패스워드 확인 검사
+            if (password !== confirmPassword) {
+                displayMessage('패스워드가 일치하지 않습니다.', 'error');
+                return;
+            }
+
+            // Axios로 회원가입 API 호출
+            axios.post('/api/me/signup', {
+                email: email,
+                password: password,
+                name: nickname
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                    .then(response => {
+                        console.log(response.data);
+                        displayMessage('회원가입이 성공적으로 완료되었습니다!', 'success');
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        const errorMsg = error.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
+                        displayMessage(errorMsg, 'error');
+                    });
+        });
+
+        document.getElementById('codeVerifyBtn').addEventListener('click', function () {
+            const email = document.getElementById('email').value;
+            const code = document.getElementById('verificationCode').value;
+
+            axios.post('/api/verification/certify-code', {
+                email: email,
+                code: code
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true
+            })
+                    .then(response => {
+                        displayMessage('인증 코드가 확인되었습니다!', 'success');
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        const errorMsg = error.response?.data?.message || '인증 코드 확인 중 오류가 발생했습니다.';
+                        displayMessage(errorMsg, 'error');
+                    });
+        });
+
+
+        // 메시지 표시 함수
+        function displayMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+        }
+    </script>
+
 </body>
 
 </html>

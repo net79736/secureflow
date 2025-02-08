@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +27,7 @@ public class MyInfoControllerImpl implements MyInfoController {
 
     @Override
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request, BindingResult bindingResult) {
         User user = userCommandService.createBasicUser(
                 new UserCommand.CreateUserCommand(
                         request.email(),
@@ -37,7 +38,7 @@ public class MyInfoControllerImpl implements MyInfoController {
 
         UserResponse response = new UserResponse(user);
 
-        return ResponseEntity.ok(new SignUpResponse(response));
+        return ResponseEntity.ok(new SignUpResponse("SUCCESS", "회원 가입 성공", response));
     }
 
 }

@@ -15,7 +15,7 @@ import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATIO
 @Configuration
 public class WebConfig {
 
-    @Value("${FRONT_URL:http://localhost:3000}")
+    @Value("${FRONT_URL:http://localhost:8080}")
     private String frontUrl;
 
     protected WebConfig() {
@@ -26,7 +26,7 @@ public class WebConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        final String[] ALLOWED_ORIGIN = {frontUrl, "http://localhost:3000"};
+        final String[] ALLOWED_ORIGIN = {frontUrl, "http://localhost:8080"};
 
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(ALLOWED_ORIGIN));
