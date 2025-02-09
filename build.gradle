@@ -53,6 +53,10 @@ dependencies {
     // spring boot mail 의존성 추가
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: '3.3.4'
 
+    // boot/spring-boot-devtools
+    implementation group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '3.3.8'
+
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
 

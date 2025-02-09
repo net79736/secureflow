@@ -28,7 +28,11 @@ public class CustomValidationAdvice {
     public void deleteMapping() {
     }
 
-    @Around("postMapping() || putMapping() || deleteMapping()") // joinPoint 의 전후 제어
+    @Pointcut("@annotation(org.springframework.web.bind.annotation.GetMapping)")
+    public void getMapping() {
+    }
+
+    @Around("postMapping() || putMapping() || deleteMapping() || getMapping()") // joinPoint 의 전후 제어
     public Object validationAdvice(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         Object[] args = proceedingJoinPoint.getArgs(); // JoinPoint의 매개변수
         for (Object arg : args) {

@@ -5,6 +5,7 @@ public class UserCommand {
     public record CreateUserCommand(
             String email,
             String password,
+            String confirmPassword,
             String name
     ) {
 

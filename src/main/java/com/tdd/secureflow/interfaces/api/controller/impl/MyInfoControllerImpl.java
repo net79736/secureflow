@@ -34,6 +34,7 @@ public class MyInfoControllerImpl implements MyInfoController {
                 new UserCommand.CreateUserCommand(
                         request.email(),
                         request.password(),
+                        request.confirmPassword(),
                         request.name()
                 )
         );

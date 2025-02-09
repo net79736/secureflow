@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.tdd.secureflow.domain.support.error.CoreException.createErrorJson;
 import static com.tdd.secureflow.domain.support.error.ErrorType.Email.*;
 import static java.time.LocalDateTime.now;
 
@@ -82,13 +83,13 @@ public class EmailVerificationSender {
 
         if (storedCode == null || now().isAfter(storedCode.getExpirationTime())) {
             // return false; // 코드가 없거나 만료된 경우
-            throw new CoreException(EMAIL_CODE_NOT_FOUND);
+            throw new CoreException(EMAIL_CODE_NOT_FOUND, createErrorJson("verificationCode", EMAIL_CODE_NOT_FOUND.getMessage()));
         }
 
         log.debug("stored code {}", storedCode.getCode());
         log.debug("inputCode {}", inputCode);
         if (!storedCode.getCode().equals(inputCode)) {
-            throw new CoreException(EMAIL_CODE_MISMATCH);
+            throw new CoreException(EMAIL_CODE_MISMATCH, createErrorJson("verificationCode", EMAIL_CODE_MISMATCH.getMessage()));
         }
     }
 
