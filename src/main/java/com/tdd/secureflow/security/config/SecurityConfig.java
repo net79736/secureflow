@@ -6,6 +6,7 @@ import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
 import com.tdd.secureflow.security.filter.TokenAuthenticationFilter;
 import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
 import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
+import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import com.tdd.secureflow.security.service.CustomUserDetailsService;
 import jakarta.annotation.PostConstruct;
@@ -98,8 +99,13 @@ public class SecurityConfig {
                 .addFilterAfter(new TokenAuthenticationFilter(jwtProvider), JwtAuthenticationFilter.class)
                 .addFilter(webConfig.corsFilter()); // CORS 필터 추가
 
-//        // cors 설정
-//        http.cors((corsCustomizer) -> corsCustomizer.configurationSource(configurationSource()));
+        // 로그아웃 설정
+        http.logout(logout -> logout
+                .logoutUrl("/auth/logout")
+                .invalidateHttpSession(true)
+                .logoutSuccessHandler(new CustomLogoutSuccessHandler(jwtProvider))
+                .permitAll()
+        );
 
         // 예외 처리 핸들러 설정
         http.exceptionHandling(exceptionHandling -> exceptionHandling
@@ -123,6 +129,8 @@ public class SecurityConfig {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
         provider.setUserDetailsService(customUserDetailsService);
+        // 로그인 실패 이유를 구체적으로 구분하고 싶을 때 사용하는 설정
+        provider.setHideUserNotFoundExceptions(false);  // 예외 숨김 해제 (별도 Exception 으로 처리하기)
         return new ProviderManager(provider);
     }
 }

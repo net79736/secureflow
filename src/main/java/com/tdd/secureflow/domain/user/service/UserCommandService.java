@@ -7,6 +7,7 @@ import com.tdd.secureflow.domain.user.dto.UserRepositoryParam.CreateUserParam;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,8 @@ public class UserCommandService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     public User createBasicUser(CreateUserCommand command) {
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(command.email())) {
@@ -35,7 +38,7 @@ public class UserCommandService {
         return userRepository.createUser(
                 new CreateUserParam(
                         command.email(),
-                        command.password(),
+                        passwordEncoder.encode(command.password()),
                         command.name(),
                         USER,
                         LOCAL

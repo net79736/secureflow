@@ -35,8 +35,22 @@ function getTokenFromLocalStorage() {
 
 // 로그아웃 버튼 이벤트 리스너 추가
 document.getElementById('logoutBtn').addEventListener('click', function () {
-    removeTokenFromLocalStorage();
-    window.location.href = '/login';  // 로그아웃 후 로그인 페이지로 리다이렉트
+    // 서버에 로그아웃 요청 (토큰 없이)
+    axios.post('/auth/logout', {}, {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        withCredentials: true  // 쿠키와 같은 자격 증명 포함 (필요한 경우)
+    })
+        .then(response => {
+            console.log("로그아웃 성공:", response.data);
+            removeTokenFromLocalStorage();  // 로컬스토리지에서 토큰 삭제
+            window.location.href = '/';     // 루트 페이지로 리다이렉트
+        })
+        .catch(error => {
+            console.error("로그아웃 실패:", error);
+            alert("로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.");
+        });
 });
 
 // 로컬스토리지에서 토큰 삭제 함수

@@ -5,90 +5,7 @@
     <meta charset="UTF-8">
     <title>Login Page</title>
     <link rel="stylesheet" th:href="@{/css/common.css}">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-        }
-
-        .navbar {
-            background-color: #007bff;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .navbar a:hover {
-            color: #d4e2ff;
-        }
-
-        .container {
-            max-width: 400px;
-            margin: 100px auto;
-            background-color: #ffffff;
-            padding: 40px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #333333;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        .signup-link {
-            margin-top: 20px;
-        }
-
-        .signup-link a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/user/login.css}">
 </head>
 
 <body>
@@ -108,12 +25,12 @@
                 <h1>로그인</h1>
             </div>
 
-            <form action="/login" method="post">
+            <form id="loginForm">
                 <div class="form-group">
-                    <input type="text" name="username" placeholder="아이디">
+                    <input type="text" id="username" name="username" placeholder="아이디">
                 </div>
                 <div class="form-group">
-                    <input type="password" name="password" placeholder="패스워드">
+                    <input type="password" id="password" name="password" placeholder="패스워드">
                 </div>
                 <button type="submit" class="btn">로그인</button>
             </form>
@@ -124,5 +41,65 @@
         </div>
     </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script th:src="@{/js/common.js}" th:inline="javascript"></script>
+<script>
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // 폼의 기본 제출 막기 (페이지 새로고침 방지)
 
+        // 기존 에러 메시지 초기화
+        clearErrors();
+
+        // 폼 데이터 수집
+        const loginData = {
+            username: document.getElementById("username").value.trim(),
+            password: document.getElementById("password").value.trim()
+        };
+
+        // 입력값 검증 (username, password가 비어 있는지 확인)
+        if (!loginData.username) {
+            alert("아이디를 입력해주세요.");
+            return;
+        }
+
+        if (!loginData.password) {
+            alert("비밀번호를 입력해주세요.");
+            return;
+        }
+
+        // 서버로 로그인 요청 (Axios 사용)
+        axios.post("/auth/login", loginData, {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+                .then(response => {
+                    if (response.status === 200) {
+                        // Authorization 헤더에서 Bearer 토큰 추출
+                        const authHeader = response.headers.authorization;
+
+                        if (authHeader && authHeader.startsWith('Bearer ')) {
+                            const token = authHeader.split(' ')[1];  // 'Bearer ' 이후 토큰 추출
+
+                            // 로컬스토리지에 토큰 저장
+                            saveTokenToLocalStorage(token);
+
+                            alert("로그인에 성공했습니다!");
+                            window.location.href = "/";  // 루트 페이지로 이동
+                        } else {
+                            console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("로그인 실패:", error);
+
+                    // 서버로부터 받은 에러 메시지 추출
+                    const errorMessage = error.response?.data?.error || "로그인 중 오류가 발생했습니다. 다시 시도해주세요.";
+
+                    // 에러 메시지 표시
+                    alert(errorMessage);
+                });
+    });
+</script>
 </html>
