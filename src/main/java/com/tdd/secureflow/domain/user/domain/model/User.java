@@ -33,7 +33,7 @@ public class User {
     private UserType type = LOCAL;
 
 //    @Enumerated(EnumType.STRING)
-//    @Column(name = "status", nullable = false)
+//    @Column(nickname = "status", nullable = false)
 //    private MemberStatus status = PENDING;
 
 

@@ -5,118 +5,8 @@
     <meta charset="UTF-8">
     <title>회원가입</title>
     <link rel="stylesheet" th:href="@{/css/common.css}">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-        }
-
-        .navbar {
-            background-color: #007bff;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .navbar a:hover {
-            color: #d4e2ff;
-        }
-
-        .container {
-            max-width: 400px;
-            margin: 50px auto;
-            background-color: #ffffff;
-            padding: 40px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .container h2 {
-            margin-bottom: 30px;
-            color: #333333;
-        }
-
-        .form-group {
-            margin-bottom: 14px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333333;
-        }
-
-        .form-group input {
-            width: calc(100% - 110px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .form-group .inline {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .form-group button {
-            white-space: nowrap;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .form-group button:hover {
-            background-color: #0056b3;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-
-        .submit-btn:hover {
-            background-color: #218838;
-        }
-
-        .message {
-            color: blue; /* 글자 색을 붉게 설정 */
-        }
-
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/user/signup.css}">
 </head>
-
 <body>
     <div class="navbar">
         <div class="logo">
@@ -167,10 +57,10 @@
 
                 <div class="form-group inline">
                     <div class="form-group">
-                        <label for="name">닉네임</label>
-                        <input type="text" id="name" name="name" placeholder="닉네임 입력">
+                        <label for="nickname">닉네임</label>
+                        <input type="text" id="nickname" name="nickname" placeholder="닉네임 입력">
                     </div>
-                    <span id="nameError" class="error-message"></span>
+                    <span id="nicknameError" class="error-message"></span>
                 </div>
 
                 <button type="submit" class="submit-btn">회원가입</button>
@@ -181,153 +71,8 @@
         </div>
     </div>
     <!-- Axios 스크립트 여기로 이동 -->
+    <script th:src="@{/js/common.js}" th:inline="javascript"></script>
+    <script th:src="@{/js/user/signup.js}" th:inline="javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-        document.getElementById('emailVerifyBtn').addEventListener('click', function () {
-            clearMessage();  // 메시지 초기화
-            const email = document.getElementById('email').value;
-
-            axios.post('/api/verification/send', {
-                email: email
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                withCredentials: true
-            })
-                    .then(response => {
-                        if (response.data.status) {
-                            alert("이메일을 전송하였습니다.")
-                        }
-                    })
-                    .catch(error => {
-                        handleErrors(error.response.data.data);
-                    });
-        });
-
-        document.getElementById("signupForm").addEventListener("submit", function (event) {
-            event.preventDefault(); // 폼의 기본 제출 막기 (페이지 새로고침 방지)
-            // 기존 에러 메시지 초기화
-            clearErrors();
-
-            // 폼 데이터 수집
-            const formData = {
-                email: document.getElementById("email").value,
-                verificationCode: document.getElementById("verificationCode").value,
-                password: document.getElementById("password").value,
-                confirmPassword: document.getElementById("confirmPassword").value,
-                name: document.getElementById("name").value
-            };
-
-            // 서버로 데이터 전송 (Axios 요청)
-            axios.post("/api/me/signup", formData, {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-                    .then(response => {
-                        if (response.data.status) {
-                            alert("회원가입이 완료되었습니다.");
-                        }
-                    })
-                    .catch(error => {
-                        console.log(error)
-                        console.log(error)
-                        console.log(error)
-                        console.log(error)
-                        if (error.response.data.data) {
-                            handleErrors(error.response.data.data);
-                        } else {
-                            alert(error.response.data.message);
-                        }
-                    });
-        });
-
-        document.getElementById('codeVerifyBtn').addEventListener('click', function () {
-            clearMessage();  // 메시지 초기화
-            const email = document.getElementById('email').value;
-            const code = document.getElementById('verificationCode').value;
-
-            axios.post('/api/verification/certify-code', {
-                email: email,
-                code: code
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                withCredentials: true
-            })
-                    .then(response => {
-                        if (response.data.status) {
-                            alert("입력된 인증코드가 확인되었습니다.");
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        if (error.response.data.data) {
-                            handleErrors(error.response.data.data);
-                        } else {
-                            alert(error.response.data.message);
-                        }
-                    });
-        });
-
-        document.getElementById("checkDuplicateBtn").addEventListener("click", function () {
-            clearMessage();  // 메시지 초기화
-            const email = document.getElementById("email").value;
-
-            // GET 요청으로 이메일 중복 확인
-            axios.get('/api/accounts/check-duplicate', {
-                params: {email: email},  // 쿼리 파라미터로 이메일 전송
-                withCredentials: true
-            })
-                    .then(response => {
-                        if (response.data.status) {
-                            alert("사용가능한 이메일 입니다.");
-                        }
-                    })
-                    .catch(error => {
-                        if (error.response.data.data) {
-                            handleErrors(error.response.data.data);
-                        } else {
-                            alert(error.response.data.message);
-                        }
-                    });
-        });
-
-        // 에러 메시지를 필드별로 표시하는 함수
-        function handleErrors(errors) {
-            for (const field in errors) {
-                const errorElement = document.getElementById(`${field}Error`);
-                if (errorElement) {
-                    errorElement.innerText = errors[field];
-                }
-            }
-        }
-
-        // 기존 에러 메시지 초기화 함수
-        function clearErrors() {
-            const errorMessages = document.querySelectorAll(".error-message");
-            errorMessages.forEach(element => element.innerText = "");
-        }
-
-        // 메시지 초기화 함수 (form 전체 초기화 포함)
-        function clearMessage() {
-            // 1. 상단 메시지 초기화
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = '';       // 상단 메시지 텍스트 초기화
-            messageDiv.className = 'message';  // 클래스 초기화 (스타일 리셋)
-
-            // 2. 각 필드의 에러 메시지 초기화 (span.error-message 초기화)
-            const errorMessages = document.querySelectorAll('.error-message');
-            errorMessages.forEach(span => span.textContent = '');
-
-            // 3. 입력 필드 테두리 스타일 초기화 (선택사항)
-            const inputFields = document.querySelectorAll('input');
-            inputFields.forEach(input => input.classList.remove('error-border'));  // 스타일 초기화 (선택 시)
-        }
-    </script>
-
 </body>
-
 </html>

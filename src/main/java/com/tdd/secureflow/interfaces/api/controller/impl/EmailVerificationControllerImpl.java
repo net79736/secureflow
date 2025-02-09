@@ -33,7 +33,7 @@ public class EmailVerificationControllerImpl implements EmailVerificationControl
         return ResponseEntity.ok(new ResponseDto(SUCCESS.getValue(), "이메일 인증 코드 전송 성공", null));
     }
 
-    @PostMapping("/certify-code")
+    @PostMapping("/verify-code")
     public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest verifyCodeRequest, BindingResult bindingResult) {
         String code = verifyCodeRequest.code(); // 인증 코드
         String email = verifyCodeRequest.email(); // 이메일

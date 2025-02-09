@@ -53,7 +53,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
 //                String accessCategory = jwtProvider.getCategory(accessToken);
 //                if (!TOKEN_CATEGORY_ACCESS.equals(accessCategory)) {
-//                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN.name());
+//                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN.nickname());
 //                    return;
 //                }
 

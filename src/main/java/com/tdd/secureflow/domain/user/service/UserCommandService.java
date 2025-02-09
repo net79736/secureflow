@@ -29,7 +29,7 @@ public class UserCommandService {
             log.warn("이메일 중복: {}", command.email());
             throw new CoreException(ACCOUNT_ALREADY_EXISTS, createErrorJson("email", ACCOUNT_ALREADY_EXISTS.getMessage()));
         }
-        
+
         validatePasswordMatching(command.password(), command.confirmPassword());
 
         return userRepository.createUser(
