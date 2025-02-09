@@ -2,6 +2,7 @@ package com.tdd.secureflow.interfaces.api.controller;
 
 import com.tdd.secureflow.domain.common.base.ResponseDto;
 import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.SignUpRequest;
+import com.tdd.secureflow.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,4 +18,6 @@ public interface MyInfoController {
             HttpServletResponse httpServletResponse
     );
 
+    @Operation(summary = "로그인 회원 정보 조회", description = "로그인 회원의 정보를 조회 합니다.")
+    ResponseEntity<ResponseDto> getMyInfo(CustomUserDetails userDetails);
 }

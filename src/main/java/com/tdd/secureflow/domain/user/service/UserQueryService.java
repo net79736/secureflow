@@ -1,6 +1,7 @@
 package com.tdd.secureflow.domain.user.service;
 
 import com.tdd.secureflow.domain.support.error.CoreException;
+import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,10 @@ public class UserQueryService {
             throw new CoreException(ACCOUNT_ALREADY_EXISTS, createErrorJson("email", ACCOUNT_ALREADY_EXISTS.getMessage()));
         }
         return existsByEmail;
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
 }

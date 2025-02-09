@@ -18,14 +18,14 @@ spring:
   jpa:
     show-sql: ${JPA_SHOW_SQL:true}
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      ddl-auto: ${JPA_DDL_AUTO:update}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         naming:
           physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-        format_sql: ${JPA_FORMAT_SQL:false}
-        highlight_sql: ${JPA_HIGHLIGHT_SQL:false}
+        format_sql: ${JPA_FORMAT_SQL:true}
+        highlight_sql: ${JPA_HIGHLIGHT_SQL:true}
 
 logging:
   level:

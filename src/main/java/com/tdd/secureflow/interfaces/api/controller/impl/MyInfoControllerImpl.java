@@ -4,6 +4,7 @@ import com.tdd.secureflow.domain.common.base.ResponseDto;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.dto.UserCommand;
 import com.tdd.secureflow.domain.user.service.UserCommandService;
+import com.tdd.secureflow.domain.user.service.UserQueryService;
 import com.tdd.secureflow.interfaces.api.controller.MyInfoController;
 import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.SignUpRequest;
 import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.UserResponse;
@@ -28,6 +29,8 @@ public class MyInfoControllerImpl implements MyInfoController {
 
     private final UserCommandService userCommandService;
 
+    private final UserQueryService userQueryService;
+
     private final JwtResponseHandler jwtResponseHandler;
 
     @Override
@@ -51,11 +54,14 @@ public class MyInfoControllerImpl implements MyInfoController {
         return ResponseEntity.ok(new ResponseDto<>(SUCCESS.getValue(), "회원 가입 성공", response));
     }
 
+    @Override
     @GetMapping
     public ResponseEntity<ResponseDto> getMyInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("MyInfoController get 메서드 실행");
-        String email = userDetails.getUsername();
+        log.info("MyInfoController getMyInfo 메서드 실행");
         
-        return null;
+        String email = userDetails.getUsername();
+        User user = userQueryService.getUserByEmail(email);
+        UserResponse response = new UserResponse(user);
+        return ResponseEntity.ok(new ResponseDto<>(SUCCESS.getValue(), "로그인 회원 정보 조회 성공", response));
     }
 }

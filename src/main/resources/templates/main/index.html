@@ -5,82 +5,15 @@
     <meta charset="UTF-8">
     <title>Index Page</title>
     <link rel="stylesheet" th:href="@{/css/common.css}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            background-color: #ffffff;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            color: #333333;
-            font-size: 2em;
-        }
-
-        .user-role {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .links {
-            margin-top: 20px;
-        }
-
-        .links a {
-            display: inline-block;
-            margin: 10px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .links a:hover {
-            background-color: #0056b3;
-        }
-
-        .auth {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-        }
-
-        .auth a {
-            margin-left: 15px;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .auth a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/index.css}">
 </head>
 
 <body>
     <div class="auth">
-        <a href="/login">로그인</a>
-        <a href="/signup">회원가입</a>
+        <a href="/login" id="loginLink">로그인</a>
+        <a href="/signup" id="signupLink">회원가입</a>
+        <span id="userEmail" style="display: none; margin-right: 10px;"></span>
+        <button id="logoutBtn" style="display: none;">로그아웃</button>
     </div>
 
     <div layout:fragment="content">
@@ -108,5 +41,56 @@
         </div>
     </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script th:src="@{/js/common.js}" th:inline="javascript"></script>
+<script>
+    fetchUserInfo();
 
+    // 로그인한 사용자 정보 가져오기
+    function fetchUserInfo() {
+        const token = getTokenFromLocalStorage();
+
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            window.location.href = '/login';
+            return;
+        }
+
+        axios.get('/api/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            withCredentials: true // 쿠키와 같은 자격 증명 포함
+        })
+                .then(response => {
+                    if (response.data.status) {
+                        displayUserInfo(response.data.data);  // 사용자 정보를 화면에 표시하는 함수
+                    }
+                })
+                .catch(error => {
+                    if (error.response && error.response.status !== 1) {
+                        // alert("인증이 만료되었습니다. 다시 로그인 해주세요.");
+                        // window.location.href = '/login';
+                        console.log("회원 정보를 가져오는 데 실패했습니다.");
+                    }
+                });
+    }
+
+    // 사용자 정보를 화면에 표시하는 함수
+    function displayUserInfo(userInfo) {
+        // 로그인 및 회원가입 링크 숨기기
+        document.getElementById('loginLink').style.display = 'none';
+        document.getElementById('signupLink').style.display = 'none';
+
+        // 사용자 이메일 표시
+        const userEmailElement = document.getElementById('userEmail');
+        userEmailElement.textContent = `${userInfo.email} 님 환영합니다!`;
+        userEmailElement.style.display = 'inline';  // 이메일 표시
+
+        // 로그아웃 버튼 표시
+        document.getElementById('logoutBtn').style.display = 'inline';
+    }
+
+</script>
 </html>

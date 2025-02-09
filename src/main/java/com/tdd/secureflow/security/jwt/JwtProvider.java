@@ -54,7 +54,7 @@ public class JwtProvider {
                 .issuedAt(new Date())
                 .expiration(expirationDate)
                 .claim("category", category)
-                .claim("id", username)
+                .claim("email", username)
                 .claim("role", role)
                 .signWith(getSigningKey())
                 .compact();
@@ -153,10 +153,12 @@ public class JwtProvider {
      */
     public String getAccessToken(String authorizationHeader) {
         if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_SCHEME)) {
-            return authorizationHeader;
+            // BEARER_SCHEME ("Bearer ") 제거 및 공백 제거
+            return authorizationHeader.substring(BEARER_SCHEME.length()).trim();
         }
-        return null;
+        return null; // Authorization 헤더가 없거나 잘못된 형식일 경우 null 반환
     }
+
 
     /**
      * 토큰으로부터 카테고리를 추출

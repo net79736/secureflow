@@ -52,6 +52,8 @@ document.getElementById("signupForm").addEventListener("submit", function (event
                     saveTokenToLocalStorage(token);
 
                     alert("회원가입이 완료되었습니다.");
+
+                    location.href = "/";
                 } else {
                     console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
                 }

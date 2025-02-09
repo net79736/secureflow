@@ -11,6 +11,45 @@ function saveTokenToLocalStorage(token) {
     }
 }
 
+/**
+ * 로컬스토리지에서 Access Token을 가져오는 함수
+ * @returns {string|null} - 저장된 JWT 토큰 또는 null
+ */
+function getTokenFromLocalStorage() {
+    try {
+        const token = localStorage.getItem('accessToken');
+
+        if (token) {
+            console.log("토큰을 성공적으로 가져왔습니다.");
+            return token;
+        } else {
+            console.warn("로컬스토리지에 저장된 토큰이 없습니다.");
+            return null;
+        }
+
+    } catch (error) {
+        console.error("토큰 가져오는 중 오류 발생:", error);
+        return null;
+    }
+}
+
+// 로그아웃 버튼 이벤트 리스너 추가
+document.getElementById('logoutBtn').addEventListener('click', function () {
+    removeTokenFromLocalStorage();
+    window.location.href = '/login';  // 로그아웃 후 로그인 페이지로 리다이렉트
+});
+
+// 로컬스토리지에서 토큰 삭제 함수
+function removeTokenFromLocalStorage() {
+    try {
+        localStorage.removeItem('accessToken');
+        console.log("토큰이 성공적으로 삭제되었습니다.");
+    } catch (error) {
+        console.error("토큰 삭제 중 오류 발생:", error);
+    }
+}
+
+
 // 에러 메시지를 필드별로 표시하는 함수
 function handleErrors(errors) {
     for (const field in errors) {

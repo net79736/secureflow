@@ -18,6 +18,12 @@ public class JwtResponseHandler {
 
     public void addAuthorizationHeader(HttpServletResponse response, String email, String role) {
         // Authorization
+        System.out.println("aaaaaaaaaaaaaaaaaa");
+        System.out.println("aaaaaaaaaaaaaaaaaa");
+        System.out.println("aaaaaaaaaaaaaaaaaa");
+        System.out.println("aaaaaaaaaaaaaaaaaa");
+        System.out.println("email = " + email);
+        System.out.println("role = " + role);
         String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofDays(1), email, role);
         // 응답 헤더 설정
         response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
