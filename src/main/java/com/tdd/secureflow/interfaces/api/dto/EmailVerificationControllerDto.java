@@ -22,22 +22,4 @@ public class EmailVerificationControllerDto {
     ) {
 
     }
-
-    public record SendVerificationEmailResponse(
-            String code,
-            String message,
-            Object data
-    ) {
-
-    }
-
-    public record VerifyCodeResponse(
-            String code,
-            String message,
-            Object data
-    ) {
-
-    }
-
-
 }

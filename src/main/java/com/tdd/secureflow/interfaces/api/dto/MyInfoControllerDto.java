@@ -24,14 +24,6 @@ public class MyInfoControllerDto {
 
     }
 
-    public record SignUpResponse(
-            String code,
-            String message,
-            UserResponse userResponse
-    ) {
-
-    }
-
     public record UserResponse(
             @Schema(description = "이메일 계정", example = "korea@naver.com")
             String email,
