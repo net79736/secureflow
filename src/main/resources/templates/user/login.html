@@ -54,6 +54,13 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script th:src="@{/js/common.js}" th:inline="javascript"></script>
 <script>
+    const token = getTokenFromLocalStorage();
+
+    if (token) {
+        window.location.href = '/';
+    }
+</script>
+<script>
     document.getElementById("loginForm").addEventListener("submit", function (event) {
         event.preventDefault(); // 폼의 기본 제출 막기 (페이지 새로고침 방지)
 
