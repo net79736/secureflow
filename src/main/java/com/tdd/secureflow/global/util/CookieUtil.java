@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
+
 public class CookieUtil {
 
     /**
@@ -77,6 +79,19 @@ public class CookieUtil {
         cookie.setMaxAge(0); // 즉시 만료
         cookie.setPath("/"); // 기존 쿠키 경로와 동일하게 설정
         return cookie;
+    }
+
+    /**
+     * 쿠키 삭제
+     *
+     * @param response HttpServletResponse 객체
+     * @param path     쿠키 경로
+     */
+    public static void removeCookie(HttpServletResponse response, String path) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_KEY, null);
+        cookie.setMaxAge(0);
+        cookie.setPath(path);
+        response.addCookie(cookie);
     }
 
     /**

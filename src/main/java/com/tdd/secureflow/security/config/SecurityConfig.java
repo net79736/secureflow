@@ -62,7 +62,6 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
-//    private final RefreshJpaRepository refreshJpaRepository;
 
     @PostConstruct
     public void init() {
@@ -122,7 +121,7 @@ public class SecurityConfig {
         http.logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .invalidateHttpSession(true)
-                .logoutSuccessHandler(new CustomLogoutSuccessHandler(jwtProvider))
+                .logoutSuccessHandler(new CustomLogoutSuccessHandler(jwtProvider, refreshRepository))
                 .permitAll()
         );
 

@@ -61,12 +61,12 @@ public class ReIssueControllerImpl implements ReIssueController {
             ));
             return ResponseEntity.ok(new ResponseDto<>(ResponseStatus.SUCCESS.getValue(), "토큰 재발급 성공", null));
         } catch (CoreException e) {
-            // 서비스에서 발생한 PlayHiveException 을 그대로 재던짐
-            log.error("서비스에서 발생한 PlayHiveException");
+            // 서비스에서 발생한 CoreException 을 그대로 재던짐
+            log.error("서비스에서 발생한 CoreException");
             log.error(e.getMessage());
             throw e;
         } catch (Exception e) {
-            // 일반 예외는 PlayHiveException 으로 에러를 던짐
+            // 일반 예외는 CoreException 으로 에러를 던짐
             log.error("Unexpected error during token reissue :" + e.getMessage());
             throw new CoreException(INTERNAL_SERVER_ERROR, e.getMessage());
         }

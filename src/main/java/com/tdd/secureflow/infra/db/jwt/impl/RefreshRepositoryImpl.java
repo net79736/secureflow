@@ -1,7 +1,7 @@
 package com.tdd.secureflow.infra.db.jwt.impl;
 
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.ExistsRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.model.Refresh;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
@@ -23,7 +23,7 @@ public class RefreshRepositoryImpl implements RefreshRepository {
 
     @Override
     @Transactional
-    public Refresh createRefresh(CreateRefreshParam param) {
+    public Refresh createRefresh(CreateRefreshByEmailAndRefreshAndExpirationParam param) {
         Refresh refreshEntity = Refresh.builder()
                 .email(param.email())
                 .refresh(param.refresh())
@@ -35,7 +35,7 @@ public class RefreshRepositoryImpl implements RefreshRepository {
 
     @Override
     @Transactional
-    public void deleteRefresh(DeleteRefreshParam param) {
+    public void deleteRefresh(DeleteRefreshByEmailParam param) {
         refreshJpaRepository.deleteByEmail(param.email());
     }
 

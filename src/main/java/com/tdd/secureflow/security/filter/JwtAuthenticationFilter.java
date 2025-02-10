@@ -1,8 +1,8 @@
 package com.tdd.secureflow.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
 import com.tdd.secureflow.security.jwt.JwtProvider;
@@ -95,10 +95,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), username, role);
 
             // 기존 리프레시 토큰 삭제
-            refreshRepository.deleteRefresh(new DeleteRefreshParam(username));
+            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(username));
             // 새로운 리프레시 토큰 등록
             Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-            refreshRepository.createRefresh(new CreateRefreshParam(username, refreshToken, expiration));
+            refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(username, refreshToken, expiration));
 
             response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
 

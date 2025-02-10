@@ -8,11 +8,11 @@ public class RefreshRepositoryParam {
 
     }
 
-    public record CreateRefreshParam(String email, String refresh, Date expiration) {
+    public record CreateRefreshByEmailAndRefreshAndExpirationParam(String email, String refresh, Date expiration) {
 
     }
 
-    public record DeleteRefreshParam(String email) {
+    public record DeleteRefreshByEmailParam(String email) {
 
     }
 

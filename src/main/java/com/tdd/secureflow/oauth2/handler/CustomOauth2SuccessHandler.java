@@ -1,6 +1,7 @@
 package com.tdd.secureflow.oauth2.handler;
 
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
@@ -75,10 +76,10 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), user.getEmail(), role);
 
         // 기존 리프레시 토큰 삭제
-        refreshRepository.deleteRefresh(new RefreshRepositoryParam.DeleteRefreshParam(user.getEmail()));
+        refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(user.getEmail()));
         // 새로운 리프레시 토큰 등록
         Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-        refreshRepository.createRefresh(new RefreshRepositoryParam.CreateRefreshParam(user.getEmail(), refreshToken, expiration));
+        refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(user.getEmail(), refreshToken, expiration));
 
         response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
 

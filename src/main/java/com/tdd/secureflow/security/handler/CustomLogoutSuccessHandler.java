@@ -1,7 +1,8 @@
 package com.tdd.secureflow.security.handler;
 
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.security.jwt.JwtProvider;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,56 +14,84 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 
 import java.io.IOException;
 
+import static com.tdd.secureflow.global.util.CookieUtil.removeCookie;
 import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
+import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.LOGOUT_PATH;
+import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.TOKEN_REISSUE_PATH;
 import static org.springframework.http.HttpMethod.POST;
 
 public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     final JwtProvider jwtProvider;
+    final RefreshRepository refreshRepository;
 
-    public CustomLogoutSuccessHandler(JwtProvider jwtProvider) {
+    public CustomLogoutSuccessHandler(JwtProvider jwtProvider, RefreshRepository refreshRepository) {
         this.jwtProvider = jwtProvider;
+        this.refreshRepository = refreshRepository;
     }
 
     @Override
-    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        logger.info("LogoutSuccessHandler onLogoutSuccess() 메서드를 실행하였습니다");
+    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        logger.info("LogoutSuccessHandler onLogoutSuccess() 실행됨");
 
-        String method = request.getMethod();
-        if (!method.equals(POST.name())) {
+        if (!request.getMethod().equals(POST.name())) {
             response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
             return;
         }
 
-        // get refresh token
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
+        String refreshToken = extractRefreshTokenFromCookies(request);
+        if (refreshToken != null) {
+            handleRefreshToken(refreshToken, response);
+        }
 
+        clearContextAndRemoveCookies(response);
+    }
+
+    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals(REFRESH_TOKEN_KEY)) {
-                    refresh = cookie.getValue();
+                if (REFRESH_TOKEN_KEY.equals(cookie.getName())) {
+                    return cookie.getValue();
                 }
             }
         }
-
-        // 1. Security Context 해제 및 빈 쿠키 추가
-        clearContextAndAddCookie(response);
+        return null;
     }
 
-    /**
-     * SecurityContext 초기화 및 빈 쿠키 추가 메서드
-     *
-     * @param response HttpServletResponse
-     */
-    private void clearContextAndAddCookie(HttpServletResponse response) {
-        SecurityContextHolder.clearContext();
-        Cookie cookie = new Cookie(REFRESH_TOKEN_KEY, null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
+    private void handleRefreshToken(String refreshToken, HttpServletResponse response) {
+        try {
+//            if (jwtProvider.isExpired(refreshToken)) {
+//                logger.warn("리프레시 토큰이 만료되었습니다.");
+//                return;
+//            }
 
-        response.addCookie(cookie);
+//            if (!TOKEN_CATEGORY_REFRESH.equals(jwtProvider.getCategory(refreshToken))) {
+//                logger.warn("잘못된 JWT 토큰 형식");
+//                return;
+//            }
+
+            String email = jwtProvider.getEmail(refreshToken);
+//            if (!refreshRepository.existsRefresh(new ExistsRefreshByEmailParam(email))) {
+//                logger.warn("인증되지 않은 토큰");
+//                return;
+//            }
+
+            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
+            logger.info("리프레시 토큰 삭제 완료");
+
+        } catch (Exception e) {
+            logger.error("리프레시 토큰 처리 중 예외 발생", e);
+        }
+    }
+
+    private void clearContextAndRemoveCookies(HttpServletResponse response) {
+        SecurityContextHolder.clearContext();
+
+        removeCookie(response, TOKEN_REISSUE_PATH);
+        removeCookie(response, LOGOUT_PATH);
+
         response.setStatus(HttpServletResponse.SC_OK);
     }
 }

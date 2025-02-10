@@ -1,12 +1,11 @@
 package com.tdd.secureflow.domain.refresh.doamin.service;
 
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.ExistsRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.model.Tokens;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.support.error.CoreException;
-import com.tdd.secureflow.domain.support.error.ErrorType;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
@@ -16,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
@@ -88,23 +85,23 @@ public class ReIssueCommandService {
             // X-Refresh-Token
             String newRefresh = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofHours(24), email, role);
 
-            log.info("쿠키 확인용 refresh: {}, publicId: {}", refresh, email);
-            log.info("쿠키 확인용 refresh: {}, publicId: {}", refresh, email);
+            log.info("쿠키 확인용 refresh: {}, email: {}", refresh, email);
+            log.info("쿠키 확인용 refresh: {}, email: {}", refresh, email);
 
             // 기존 리프레시 토큰 삭제
-            refreshRepository.deleteRefresh(new DeleteRefreshParam(email));
+            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
             // 새로운 리프레시 토큰 등록
             Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-            refreshRepository.createRefresh(new CreateRefreshParam(email, refresh, expiration));
+            refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(email, refresh, expiration));
 
             return new Tokens(newAccess, newRefresh);
         } catch (CoreException e) {
             // CoreException 그대로 던짐
-            log.error("PlayHiveException 은 그대로 던짐 : {}", e.getMessage());
+            log.error("CoreException 은 그대로 던짐 : {}", e.getMessage());
             throw e;
         } catch (Exception e) {
             // 기타 예외는 CoreException 래핑
-            log.error("기타 예외는 PlayHiveException 으로 래핑 : {}", e.getMessage());
+            log.error("기타 예외는 CoreException 으로 래핑 : {}", e.getMessage());
             throw new CoreException(INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -120,21 +117,11 @@ public class ReIssueCommandService {
         Optional<Cookie> refreshTokenOP = getCookie(request, REFRESH_TOKEN_KEY);
         if (refreshTokenOP.isEmpty()) {
             log.error("Refresh token cookie is empty.");
-            throw new CoreException(ErrorType.INVALID_REFRESH_TOKEN);
-        }
-
-        // URL 디코딩된 리프레시 토큰 값
-        String rawToken = refreshTokenOP.get().getValue();
-        String refresh = URLDecoder.decode(rawToken, StandardCharsets.UTF_8);
-        log.debug("Decoded refresh token: {}", refresh);
-
-        if (refresh == null || refresh.isBlank()) {
-            log.error("Decoded refresh token is blank.");
-            throw new CoreException(INVALID_REFRESH_TOKEN);
+            throw new CoreException(REFRESH_TOKEN_NOT_FOUND);
         }
 
         // 리프레시 토큰에서 액세스 토큰 추출
-        return refresh;
+        return refreshTokenOP.get().getValue();
     }
 
 }

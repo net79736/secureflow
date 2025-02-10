@@ -102,6 +102,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User newUser = User.builder()
                 .email(oAuth2Response.getEmail())
                 .password(PasswordUtil.generateRandomPassword())
+                .name(oAuth2Response.getName())
                 .role(USER)
                 .type(UserType.fromOAuth2Provider(oAuth2Response.getProvider()))
                 .build();
