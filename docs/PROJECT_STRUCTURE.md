@@ -20,6 +20,7 @@
 - MySQL 8.0
 
 ### 추가 라이브러리
+
 - commons-io 2.14.0
 - Spring Boot Mail 3.3.4
 - Lombok
@@ -49,8 +50,23 @@ com.example.tdd.secureflow/
 │   └── [domain]/                                   # 도메인
 │       └── facade/                                 # 퍼사드
 │
-└── infra/                                          # 인프라스트럭처 계층
-    └── db/                                         # 데이터베이스
-        └── [domain]/                               # 도메인
-            └── impl/                               # 구현체
+├── infra/                                          # 인프라스트럭처 계층
+│    └── db/                                         # 데이터베이스
+│        └── [domain]/                               # 도메인
+│            └── impl/                               # 구현체
+│            
+├── oauth2/                                        # OAuth2 모듈
+│   ├── exception/                                 # OAuth2 예외
+│   ├── handler/                                   # OAuth2 핸들러
+│   ├── model/                                     # OAuth2 모델
+│   └── service/                                   # OAuth2 서비스
+│       
+└── security/                                      # 보안 모듈
+    ├── config/                                    # 보안 설정
+    ├── dto/                                       # 보안 DTO
+    ├── filter/                                    # 보안 필터
+    ├── handler/                                   # 보안 핸들러
+    ├── jwt/                                       # JWT 처리
+    │   └── model/                                 # JWT 모델
+    └── service/                                   # 보안 서비스
 ```
