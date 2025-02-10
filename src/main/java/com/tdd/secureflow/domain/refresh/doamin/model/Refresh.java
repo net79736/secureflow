@@ -3,6 +3,7 @@ package com.tdd.secureflow.domain.refresh.doamin.model;
 import com.tdd.secureflow.domain.common.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,7 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-@Entity(name = "p_refreshes")
+@Entity
+@Table(name = "refreshes")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Refresh extends BaseEntity {
