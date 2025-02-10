@@ -22,13 +22,13 @@
                 <h1>하우! 인데스 페이지에 오셨습니다! 😊</h1>
             </div>
 
-            <div class="user-role" style="color: #007bff">
+            <div class="user-role" id="generalUser" style="color: #007bff; display: none;">
                 일반 사용자
             </div>
-            <div class="user-role" style="color: #28a745">
+            <div class="user-role" id="memberUser" style="color: #28a745; display: none;">
                 멤버 사용자
             </div>
-            <div class="user-role" style="color: #dc3545">
+            <div class="user-role" id="adminUser" style="color: #dc3545; display: none;">
                 관리자 사용자
             </div>
 
@@ -94,6 +94,18 @@
 
         // 로그아웃 버튼 표시
         document.getElementById('logoutBtn').style.display = 'inline';
+
+        document.getElementById('generalUser').style.display = 'none';
+        document.getElementById('memberUser').style.display = 'none';
+        document.getElementById('adminUser').style.display = 'none';
+
+        if (userInfo.role === 'ADMIN') {
+            document.getElementById('adminUser').style.display = 'block';
+        } else if (userInfo.role === 'USER') {
+            document.getElementById('memberUser').style.display = 'block';
+        } else {
+            document.getElementById('generalUser').style.display = 'block';
+        }
     }
 
     // 토큰 재발급 요청 함수
@@ -115,7 +127,8 @@
 
                             // 새로운 Access Token을 로컬스토리지에 저장
                             saveTokenToLocalStorage(newAccessToken);
-                            alert("토큰이 성공적으로 재발급되었습니다.");
+                            fetchUserInfo();
+                            console.log("토큰이 성공적으로 재발급되었습니다.");
                         } else {
                             console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
                         }
