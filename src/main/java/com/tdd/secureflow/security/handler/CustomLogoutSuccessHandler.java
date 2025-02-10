@@ -50,6 +50,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
     private String extractRefreshTokenFromCookies(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        System.out.println("들어옴 4");
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (REFRESH_TOKEN_KEY.equals(cookie.getName())) {
@@ -78,6 +79,16 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 //                return;
 //            }
 
+
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
+            System.out.println(email);
             refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
             logger.info("리프레시 토큰 삭제 완료");
 

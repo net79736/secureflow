@@ -28,7 +28,7 @@ public class ReIssueControllerImpl implements ReIssueController {
 
     private final ReIssueCommandService reIssueService;
     public final static String TOKEN_REISSUE_PATH = "/reissue";
-    public final static String LOGOUT_PATH = "/logout";
+    public final static String LOGOUT_PATH = "/auth/logout";
 
     @Override
     @PostMapping(TOKEN_REISSUE_PATH)
