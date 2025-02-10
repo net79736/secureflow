@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -39,10 +41,14 @@ public class SecurityConfig {
     private static final String[] PERMIT_ALL_URLS = new String[]{
             "/", "/index", "/login", "/signup"
     };
+    /* User 접근 권한 */
+    private static final String[] PERMIT_USER_URLS = new String[]{
+            "/member/member"
+    };
     /* Admin 접근 권한 */
-    private static final String[] PERMIT_ADMIN_URLS = new String[]{};
-    /* member 접근 권한 */
-    private static final String[] PERMIT_MEMBER_URLS = new String[]{};
+    private static final String[] PERMIT_ADMIN_URLS = new String[]{
+            "/admin/admin"
+    };
 
     @Value("${FRONT_URL:http://localhost:8080}")
     private String frontUrl;
@@ -66,6 +72,14 @@ public class SecurityConfig {
         log.debug("BCryptPasswordEncoder 빈 등록됨");
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ADMIN > USER");
+        return roleHierarchy;
+    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -119,6 +133,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
                         .requestMatchers(PERMIT_ALL_URLS).permitAll()
+                        .requestMatchers(PERMIT_USER_URLS).hasAnyAuthority(UserRole.USER.name())
                         .requestMatchers(PERMIT_ADMIN_URLS).hasAnyAuthority(UserRole.ADMIN.name())
                         .anyRequest().permitAll()                   // 나머지 요청은 모두 허용
         );

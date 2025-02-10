@@ -34,9 +34,8 @@
 
             <div class="links">
                 <a href="/user/user.do">유저 페이지로</a>
-                <a href="/member/member.do">멤버 페이지로</a>
-                <a href="/admin/admin.do">관리자 페이지로</a>
-                <a href="/test/test">테스트</a>
+                <button id="memberPageBtn">멤버 페이지로</button>
+                <button id="adminPageBtn">관리자 페이지로</button>
                 <button id="reissueTokenBtn">토큰 재발급</button>
             </div>
         </div>
@@ -44,6 +43,46 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script th:src="@{/js/common.js}" th:inline="javascript"></script>
+<script>
+    // LocalStorage에 저장된 토큰 가져오기 (예제)
+    const token = getTokenFromLocalStorage();
+
+    // 멤버 페이지 이동
+    document.getElementById('memberPageBtn').addEventListener('click', () => {
+        fetch('/member/member', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/member/member.do';
+                    } else {
+                        alert('접근 권한이 없습니다.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+    });
+
+    // 관리자 페이지 이동
+    document.getElementById('adminPageBtn').addEventListener('click', () => {
+        fetch('/admin/admin', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/admin.do';
+                    } else {
+                        alert('접근 권한이 없습니다.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+    });
+</script>
 <script>
     fetchUserInfo();
 
