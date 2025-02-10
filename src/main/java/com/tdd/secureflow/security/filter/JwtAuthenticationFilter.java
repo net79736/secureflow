@@ -1,6 +1,9 @@
 package com.tdd.secureflow.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshParam;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import jakarta.servlet.FilterChain;
@@ -20,23 +23,32 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
+import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
+import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
 import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
 import static com.tdd.secureflow.interfaces.CommonSecurityScheme.BEARER_SCHEME;
+import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.LOGOUT_PATH;
+import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.TOKEN_REISSUE_PATH;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
+import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
 
 
 @Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+    private final RefreshRepository refreshRepository;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, RefreshRepository refreshRepository) {
         setFilterProcessesUrl("/auth/login");
         this.authenticationManager = authenticationManager;
         this.jwtProvider = jwtProvider;
+        this.refreshRepository = refreshRepository;
     }
 
     @Override
@@ -80,11 +92,21 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             // Authorization
             String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofDays(1), username, role);
+            String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), username, role);
+
+            // 기존 리프레시 토큰 삭제
+            refreshRepository.deleteRefresh(new DeleteRefreshParam(username));
+            // 새로운 리프레시 토큰 등록
+            Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
+            refreshRepository.createRefresh(new CreateRefreshParam(username, refreshToken, expiration));
+
+            response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
+
+            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
 
             log.debug("print accessToken: {}", accessToken);
             log.debug("print role: {}", role);
-
-            response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
             response.setStatus(HttpStatus.OK.value());
 
             log.info("자체 서비스 로그인에 성공하였습니다.");
@@ -101,16 +123,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         // 예외 유형에 따라 적절한 메시지 설정
         if (failed instanceof UsernameNotFoundException) {
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
-            System.out.println(failed.getMessage());
             errorMessage = !StringUtils.isEmpty(failed.getMessage()) ? failed.getMessage() : "존재하지 않는 계정입니다.";
         } else if (failed instanceof BadCredentialsException) {
             errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";

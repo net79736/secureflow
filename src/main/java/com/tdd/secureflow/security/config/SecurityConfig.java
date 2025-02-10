@@ -1,5 +1,6 @@
 package com.tdd.secureflow.security.config;
 
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
 import com.tdd.secureflow.interfaces.WebConfig;
 import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
@@ -48,6 +49,7 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final WebConfig webConfig;
     private final CustomUserDetailsService customUserDetailsService;
+    private final RefreshRepository refreshRepository;
 //    private final CustomOAuth2UserService customOAuth2UserService;
 //    private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
 //    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
@@ -93,7 +95,7 @@ public class SecurityConfig {
 
         // JWT 인증 및 토큰 검증 필터 추가
         http.addFilterAt(
-                        new JwtAuthenticationFilter(authenticationManager(), jwtProvider),
+                        new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository),
                         UsernamePasswordAuthenticationFilter.class
                 )
                 .addFilterAfter(new TokenAuthenticationFilter(jwtProvider), JwtAuthenticationFilter.class)

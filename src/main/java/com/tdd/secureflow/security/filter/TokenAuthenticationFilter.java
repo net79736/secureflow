@@ -20,9 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_TOKEN;
-import static com.tdd.secureflow.domain.support.error.ErrorType.TOKEN_EXPIRED;
+import static com.tdd.secureflow.domain.support.error.ErrorType.*;
 import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
+import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,22 +40,22 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (!jwtProvider.validToken(accessToken)) {
                     log.warn("인증되지 않은 토큰입니다");
-                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, INVALID_TOKEN.getMessage());
+                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, INVALID_ACCESS_TOKEN.getMessage());
                     return;
                 }
 
                 Boolean expired = jwtProvider.isExpired(accessToken);
                 if (expired) {
                     log.warn("토큰이 만료되었습니다.");
-                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, TOKEN_EXPIRED.name());
+                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, ACCESS_TOKEN_EXPIRED.getMessage());
                     return;
                 }
 
-//                String accessCategory = jwtProvider.getCategory(accessToken);
-//                if (!TOKEN_CATEGORY_ACCESS.equals(accessCategory)) {
-//                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN.nickname());
-//                    return;
-//                }
+                String accessCategory = jwtProvider.getCategory(accessToken);
+                if (!TOKEN_CATEGORY_ACCESS.equals(accessCategory)) {
+                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN_TYPE.getMessage());
+                    return;
+                }
 
                 String email = jwtProvider.getEmail(accessToken);
                 String role = jwtProvider.getRole(accessToken);

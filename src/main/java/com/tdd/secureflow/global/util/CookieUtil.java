@@ -25,7 +25,7 @@ public class CookieUtil {
         // cookie.setSecure(isSecure); // Secure 설정 여부 (HTTPS에서만 사용)
         cookie.setPath(path);
         cookie.setHttpOnly(isHttpOnly);
-        if (domain != null) {
+        if (domain != null && !"localhost".equals(domain)) {
             // ex) playhive.shop
             cookie.setDomain(domain);
         }

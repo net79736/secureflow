@@ -37,6 +37,7 @@
                 <a href="/member/member.do">멤버 페이지로</a>
                 <a href="/admin/admin.do">관리자 페이지로</a>
                 <a href="/test/test">테스트</a>
+                <button id="reissueTokenBtn">토큰 재발급</button>
             </div>
         </div>
     </div>
@@ -92,5 +93,39 @@
         document.getElementById('logoutBtn').style.display = 'inline';
     }
 
+    // 토큰 재발급 요청 함수
+    function requestTokenReissue() {
+        axios.post('/reissue', {}, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            withCredentials: true  // 쿠키 포함 요청
+        })
+                .then(response => {
+                    if (response.status === 200) {
+                        console.log("토큰 재발급 성공:", response.data);
+
+                        // Authorization 헤더에서 새로운 Access Token 추출
+                        const authHeader = response.headers.authorization;
+                        if (authHeader && authHeader.startsWith('Bearer ')) {
+                            const newAccessToken = authHeader.split(' ')[1];
+
+                            // 새로운 Access Token을 로컬스토리지에 저장
+                            saveTokenToLocalStorage(newAccessToken);
+                            alert("토큰이 성공적으로 재발급되었습니다.");
+                        } else {
+                            console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("토큰 재발급 실패:", error.response.data.message);
+                    alert(error.response.data.message)
+                    // alert("토큰 재발급 중 오류가 발생했습니다. 다시 시도해주세요.");
+                });
+    }
+
+    // 예제: 버튼 클릭 시 토큰 재발급 요청
+    document.getElementById('reissueTokenBtn').addEventListener('click', requestTokenReissue);
 </script>
 </html>

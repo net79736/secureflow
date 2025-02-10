@@ -5,6 +5,7 @@ import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.SignUpRequest;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -15,6 +16,7 @@ public interface MyInfoController {
     ResponseEntity<ResponseDto> signUp(
             @Schema(description = "회원 가입 사용자 객체", example = "java.lang.Object") SignUpRequest request,
             BindingResult bindingResult,
+            HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse
     );
 

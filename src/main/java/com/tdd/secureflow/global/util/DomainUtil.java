@@ -5,6 +5,10 @@ import java.util.regex.Pattern;
 
 public class DomainUtil {
     public static String extractDomain(String str) {
+        if (str.equals("localhost")) {
+            return "localhost";
+        }
+
         String regPattern = "([a-z\\d\\-]+(?:\\.(?:asia|gg|info|name|mobi|shop|com|net|org|biz|tel|xxx|kr|co|so|me|eu|cc|or|pe|ne|re|tv|jp|tw|edu\\.vn|vn)){1,2})(?::\\d{1,5})?(?:/[^\\?]*)?(?:\\?.+)?$";
         Pattern pattern = Pattern.compile(regPattern, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(str);
