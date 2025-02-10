@@ -43,11 +43,11 @@ public class SecurityConfig {
     };
     /* User 접근 권한 */
     private static final String[] PERMIT_USER_URLS = new String[]{
-            "/member/member"
+            "/api/accounts/member"
     };
     /* Admin 접근 권한 */
     private static final String[] PERMIT_ADMIN_URLS = new String[]{
-            "/admin/admin"
+            "/api/accounts/admin"
     };
 
     @Value("${FRONT_URL:http://localhost:8080}")

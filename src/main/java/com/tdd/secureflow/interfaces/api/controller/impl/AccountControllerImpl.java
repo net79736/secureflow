@@ -30,4 +30,16 @@ public class AccountControllerImpl implements AccountController {
         userQueryService.existsByEmail(request.email());
         return ResponseEntity.ok(new ResponseDto(SUCCESS.getValue(), "계정 중복 체크 성공", null));
     }
+
+    @GetMapping("/member")
+    public ResponseEntity<String> memberPage() {
+        log.info("Accessed member page");
+        return ResponseEntity.ok("멤버 페이지 접근 성공!");
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<String> adminPage() {
+        log.info("Accessed admin page");
+        return ResponseEntity.ok("관리자 페이지 접근 성공!");
+    }
 }
