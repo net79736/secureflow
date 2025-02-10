@@ -62,7 +62,7 @@ public class MyInfoControllerImpl implements MyInfoController {
                 )
         );
 
-        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofDays(1), user.getEmail(), user.getRole().name());
+        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), user.getEmail(), user.getRole().name());
         // 응답 헤더 설정
         httpServletResponse.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
         String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), user.getEmail(), user.getRole().name());

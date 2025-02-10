@@ -91,7 +91,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             String role = auth.getAuthority();
 
             // Authorization
-            String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofDays(1), username, role);
+            String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), username, role);
             String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), username, role);
 
             // 기존 리프레시 토큰 삭제

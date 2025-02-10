@@ -40,20 +40,20 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (!jwtProvider.validToken(accessToken)) {
                     log.warn("인증되지 않은 토큰입니다");
-                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, INVALID_ACCESS_TOKEN.getMessage());
+                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, INVALID_ACCESS_TOKEN.name());
                     return;
                 }
 
                 Boolean expired = jwtProvider.isExpired(accessToken);
                 if (expired) {
                     log.warn("토큰이 만료되었습니다.");
-                    sendErrorResponse(response, HttpStatus.UNAUTHORIZED, ACCESS_TOKEN_EXPIRED.getMessage());
+                    sendErrorResponse(response, HttpStatus.GONE, ACCESS_TOKEN_EXPIRED.name());
                     return;
                 }
 
                 String accessCategory = jwtProvider.getCategory(accessToken);
                 if (!TOKEN_CATEGORY_ACCESS.equals(accessCategory)) {
-                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN_TYPE.getMessage());
+                    sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN_TYPE.name());
                     return;
                 }
 
@@ -97,6 +97,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         response.setStatus(httpStatus.value());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(String.format("{\"message\":\"%s\",\"status\":\"%s\"}", message, httpStatus.name()));
+        response.getWriter().write(String.format("{\"status\":\"%s\", \"message\":\"%s\"}", httpStatus.name(), message));
     }
 }

@@ -84,7 +84,7 @@ public class ReIssueCommandService {
 
             // 새로운 Access 및 Refresh 토큰 생성
             // Authorization
-            String newAccess = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofDays(1), email, role);
+            String newAccess = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), email, role);
             // X-Refresh-Token
             String newRefresh = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofHours(24), email, role);
 

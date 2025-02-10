@@ -13,11 +13,11 @@ public enum ErrorType implements IErrorType {
     UNAUTHORIZED_ACCESS(ErrorCode.UNAUTHORIZED, "인증되지 않은 접근입니다.", LogLevel.ERROR),
     FORBIDDEN_ACCESS(ErrorCode.FORBIDDEN, "권한이 없는 접근입니다.", LogLevel.ERROR),
     ACCESS_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "어세스 토큰이 만료되었습니다.", LogLevel.WARN),
-    INVALID_ACCESS_TOKEN(ErrorCode.UNAUTHORIZED, "유효하지 않은 어세스 토큰입니다.", LogLevel.WARN),
+    INVALID_ACCESS_TOKEN(ErrorCode.BAD_REQUEST, "유효하지 않은 어세스 토큰입니다.", LogLevel.WARN),
     REFRESH_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다.", LogLevel.WARN),
-    REFRESH_TOKEN_NOT_FOUND(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 존재하지 않습니다.", LogLevel.WARN),
-    INVALID_REFRESH_TOKEN(ErrorCode.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.", LogLevel.WARN),
-    INVALID_TOKEN_TYPE(ErrorCode.UNAUTHORIZED, "잘못된 토큰 유형 입니다.", LogLevel.ERROR),
+    REFRESH_TOKEN_NOT_FOUND(ErrorCode.BAD_REQUEST, "리프레시 토큰이 존재하지 않습니다.", LogLevel.WARN),
+    INVALID_REFRESH_TOKEN(ErrorCode.BAD_REQUEST, "유효하지 않은 리프레시 토큰입니다.", LogLevel.WARN),
+    INVALID_TOKEN_TYPE(ErrorCode.BAD_REQUEST, "잘못된 토큰 유형 입니다.", LogLevel.ERROR),
     INTERNAL_SERVER_ERROR(ErrorCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.", LogLevel.ERROR);
 
     private final ErrorCode code;
