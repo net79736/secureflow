@@ -10,7 +10,7 @@ springdoc:
     groups:
       enabled: true
   swagger-ui:
-    enabled: true # Swagger UI 사용여부 : 접근 경로 => <http://localhost:8080/swagger-ui/index.html>
+    enabled: true # Swagger UI 사용여부 : 접근 경로 => <http://localhost:8082/swagger-ui/index.html>
     tags-sorter: alpha # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
     operations-sorter: alpha # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
     defaultModelsExpandDepth: -1 # 모델 확장 깊이 (-1: 모델 숨김)

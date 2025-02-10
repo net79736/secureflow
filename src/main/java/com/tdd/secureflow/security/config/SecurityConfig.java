@@ -3,6 +3,9 @@ package com.tdd.secureflow.security.config;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
 import com.tdd.secureflow.interfaces.WebConfig;
+import com.tdd.secureflow.oauth2.handler.CustomOauth2SuccessHandler;
+import com.tdd.secureflow.oauth2.handler.OAuth2LoginFailureHandler;
+import com.tdd.secureflow.oauth2.service.CustomOAuth2UserService;
 import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
 import com.tdd.secureflow.security.filter.TokenAuthenticationFilter;
 import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
@@ -50,15 +53,15 @@ public class SecurityConfig {
             "/api/accounts/admin"
     };
 
-    @Value("${FRONT_URL:http://localhost:8080}")
+    @Value("${FRONT_URL:http://localhost:8082}")
     private String frontUrl;
     private final JwtProvider jwtProvider;
     private final WebConfig webConfig;
     private final CustomUserDetailsService customUserDetailsService;
     private final RefreshRepository refreshRepository;
-//    private final CustomOAuth2UserService customOAuth2UserService;
-//    private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
-//    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
 //    private final RefreshJpaRepository refreshJpaRepository;
 
     @PostConstruct
@@ -101,11 +104,11 @@ public class SecurityConfig {
         );
 
         // OAuth2 로그인 설정
-//        http.oauth2Login(oauth2 -> oauth2
-//                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-//                .successHandler(customOauth2SuccessHandler)
-//                .failureHandler(oAuth2LoginFailureHandler)
-//        );
+        http.oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(customOauth2SuccessHandler)
+                .failureHandler(oAuth2LoginFailureHandler)
+        );
 
         // JWT 인증 및 토큰 검증 필터 추가
         http.addFilterAt(

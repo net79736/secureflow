@@ -80,3 +80,48 @@ body {
 .signup-link a:hover {
     text-decoration: underline;
 }
+
+.oauth-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.oauth-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.oauth-btn.naver {
+    background-color: #03C75A;
+    color: white;
+}
+
+.oauth-btn.naver:hover {
+    background-color: #029B48;
+}
+
+.oauth-btn.google {
+    background-color: #FFA500;
+    color: white;
+    border: 1px solid #e59400;
+}
+
+.oauth-btn.google:hover {
+    background-color: #e59400;
+}
+
+.oauth-btn img {
+    width: 20px;
+    height: 20px;
+}
