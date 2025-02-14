@@ -9,15 +9,8 @@
 </head>
 
 <body>
-    <div class="navbar">
-        <div class="logo">
-            <a href="/">MyApp</a>
-        </div>
-        <div class="auth">
-            <a href="/login">로그인</a>
-            <a href="/signup">회원가입</a>
-        </div>
-    </div>
+    <!-- 헤더 import -->
+    <div th:replace="~{layout/header :: auth}"></div>
 
     <div layout:fragment="content">
         <div class="container">
