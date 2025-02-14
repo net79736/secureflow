@@ -33,6 +33,16 @@ function getTokenFromLocalStorage() {
     }
 }
 
+// 로컬스토리지에서 토큰 삭제 함수
+function removeTokenFromLocalStorage() {
+    try {
+        localStorage.removeItem('accessToken');
+        console.log("토큰이 성공적으로 삭제되었습니다.");
+    } catch (error) {
+        console.error("토큰 삭제 중 오류 발생:", error);
+    }
+}
+
 // 로그아웃 버튼 이벤트 리스너 추가
 document.getElementById('logoutBtn').addEventListener('click', function () {
     // 서버에 로그아웃 요청 (토큰 없이)
@@ -52,17 +62,6 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
             alert("로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.");
         });
 });
-
-// 로컬스토리지에서 토큰 삭제 함수
-function removeTokenFromLocalStorage() {
-    try {
-        localStorage.removeItem('accessToken');
-        console.log("토큰이 성공적으로 삭제되었습니다.");
-    } catch (error) {
-        console.error("토큰 삭제 중 오류 발생:", error);
-    }
-}
-
 
 // 에러 메시지를 필드별로 표시하는 함수
 function handleErrors(errors) {
@@ -95,3 +94,75 @@ function clearMessage() {
     const inputFields = document.querySelectorAll('input');
     inputFields.forEach(input => input.classList.remove('error-border'));  // 스타일 초기화 (선택 시)
 }
+
+fetchUserInfo();
+
+// 로그인한 사용자 정보 가져오기
+function fetchUserInfo() {
+    const token = getTokenFromLocalStorage();
+
+    axios.get('/api/me', {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        withCredentials: true // 쿠키와 같은 자격 증명 포함
+    })
+        .then(response => {
+            if (response.data.status) {
+                displayUserInfo(response.data.data);  // 사용자 정보를 화면에 표시하는 함수
+            }
+        })
+        .catch(error => {
+            if (error.response && error.response.status !== 1) {
+                // alert("인증이 만료되었습니다. 다시 로그인 해주세요.");
+                // window.location.href = '/login';
+                console.log("회원 정보를 가져오는 데 실패했습니다.");
+                // 토큰 만료
+                if (error.response.data.status === "GONE") {
+                    requestTokenReissue();
+                }
+            }
+        });
+}
+
+// 토큰 재발급 요청 함수
+function requestTokenReissue() {
+    axios.post('/reissue', {}, {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        withCredentials: true  // 쿠키 포함 요청
+    })
+        .then(response => {
+            if (response.status === 200) {
+                console.log("토큰 재발급 성공:", response.data);
+
+                // Authorization 헤더에서 새로운 Access Token 추출
+                const authHeader = response.headers.authorization;
+                if (authHeader && authHeader.startsWith('Bearer ')) {
+                    const newAccessToken = authHeader.split(' ')[1];
+
+                    // 새로운 Access Token을 로컬스토리지에 저장
+                    saveTokenToLocalStorage(newAccessToken);
+                    fetchUserInfo();
+                    console.log("토큰이 성공적으로 재발급되었습니다.");
+
+                    // 페이지 자동 새로고침
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 200); // 0.2초 후 새로고침 (사용자가 변화를 확인할 시간 확보)
+                } else {
+                    console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
+                }
+            }
+        })
+        .catch(error => {
+            console.error("토큰 재발급 실패:", error.response.data.message);
+            alert(error.response.data.message)
+            // alert("토큰 재발급 중 오류가 발생했습니다. 다시 시도해주세요.");
+        });
+}
+
+// 페이지 자동 새로고침
+setInterval(fetchUserInfo, 5000);
