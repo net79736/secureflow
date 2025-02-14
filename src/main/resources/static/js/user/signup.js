@@ -1,3 +1,5 @@
+let verifiedEmail = null; // 인증이 완료된 이메일을 저장하는 변수
+
 document.getElementById('emailVerifyBtn').addEventListener('click', function () {
     clearMessage();  // 메시지 초기화
     const email = document.getElementById('email').value;
@@ -13,6 +15,7 @@ document.getElementById('emailVerifyBtn').addEventListener('click', function () 
         .then(response => {
             if (response.data.status) {
                 alert("이메일을 전송하였습니다.")
+                verifiedEmail = null;
                 enableAuthControls("codeVerifyBtn");
             }
         })
@@ -23,6 +26,12 @@ document.getElementById('emailVerifyBtn').addEventListener('click', function () 
 
 document.getElementById("signupForm").addEventListener("submit", function (event) {
     event.preventDefault(); // 폼의 기본 제출 막기 (페이지 새로고침 방지)
+
+    if (!validateVerifiedEmail()) {
+        document.getElementById("verificationCodeError").innerHTML = "인증되지 않은 이메일 입니다.";
+        return;
+    }
+
     // 기존 에러 메시지 초기화
     clearErrors();
 
@@ -86,6 +95,7 @@ document.getElementById('codeVerifyBtn').addEventListener('click', function () {
         .then(response => {
             if (response.data.status) {
                 alert("입력된 인증코드가 확인되었습니다.");
+                verifiedEmail = document.getElementById("email").value;
             }
         })
         .catch(error => {
@@ -111,6 +121,7 @@ document.getElementById("checkDuplicateBtn").addEventListener("click", function 
         .then(response => {
             if (response.data.status) {
                 alert("사용가능한 이메일 입니다.");
+                verifiedEmail = null;
                 enableAuthControls("emailVerifyBtn")
             }
         })
@@ -123,3 +134,18 @@ document.getElementById("checkDuplicateBtn").addEventListener("click", function 
             disableAuthControls("emailVerifyBtn", "codeVerifyBtn")
         });
 });
+
+// 이메일 입력값 변경 시, 인증 초기화
+document.getElementById("email").addEventListener("input", function () {
+    disableAuthControls("emailVerifyBtn", "codeVerifyBtn");
+});
+
+function validateVerifiedEmail() {
+    const inputEmail = document.getElementById("email").value;
+
+    if (inputEmail !== verifiedEmail) {
+        return false;
+    }
+
+    return true;
+}
