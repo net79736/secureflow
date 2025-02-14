@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="auth" class="auth">
+        <a href="/login" id="loginLink">로그인</a>
+        <a href="/signup" id="signupLink">회원가입</a>
+        <span id="userEmail" style="display: none; margin-right: 10px;"></span>
+        <button id="logoutBtn" style="display: none;">로그아웃</button>
+    </div>
+</body>
+</html>

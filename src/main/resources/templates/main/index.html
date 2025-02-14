@@ -9,17 +9,13 @@
 </head>
 
 <body>
-    <div class="auth">
-        <a href="/login" id="loginLink">로그인</a>
-        <a href="/signup" id="signupLink">회원가입</a>
-        <span id="userEmail" style="display: none; margin-right: 10px;"></span>
-        <button id="logoutBtn" style="display: none;">로그아웃</button>
-    </div>
-
+    <!-- 헤더 import -->
+    <div th:replace="~{layout/header :: auth}"></div>
+    
     <div layout:fragment="content">
         <div class="container">
             <div class="header">
-                <h1>하우! 인데스 페이지에 오셨습니다! 😊</h1>
+                <h1>메인 페이지 입니다.</h1>
             </div>
 
             <div class="user-role" id="generalUser" style="color: #007bff; display: none;">
@@ -30,6 +26,11 @@
             </div>
             <div class="user-role" id="adminUser" style="color: #dc3545; display: none;">
                 관리자 사용자
+            </div>
+
+            <div class="token-display">
+                <strong>저장된 토큰:</strong>
+                <span id="storedToken">토큰 없음</span>
             </div>
 
             <div class="links">
@@ -43,105 +44,5 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script th:src="@{/js/common.js}" th:inline="javascript"></script>
-<script>
-    fetchUserInfo();
-
-    // 로그인한 사용자 정보 가져오기
-    function fetchUserInfo() {
-        const token = getTokenFromLocalStorage();
-
-        // if (!token) {
-        //     alert("로그인이 필요합니다.");
-        //     window.location.href = '/login';
-        //     return;
-        // }
-
-        axios.get('/api/me', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            withCredentials: true // 쿠키와 같은 자격 증명 포함
-        })
-                .then(response => {
-                    if (response.data.status) {
-                        displayUserInfo(response.data.data);  // 사용자 정보를 화면에 표시하는 함수
-                    }
-                })
-                .catch(error => {
-                    if (error.response && error.response.status !== 1) {
-                        // alert("인증이 만료되었습니다. 다시 로그인 해주세요.");
-                        // window.location.href = '/login';
-                        console.log("회원 정보를 가져오는 데 실패했습니다.");
-                        // 토큰 만료
-                        if (error.response.data.status === "GONE") {
-                            requestTokenReissue();
-                        }
-                    }
-                });
-    }
-
-    // 사용자 정보를 화면에 표시하는 함수
-    function displayUserInfo(userInfo) {
-        // 로그인 및 회원가입 링크 숨기기
-        document.getElementById('loginLink').style.display = 'none';
-        document.getElementById('signupLink').style.display = 'none';
-
-        // 사용자 이메일 표시
-        const userEmailElement = document.getElementById('userEmail');
-        userEmailElement.textContent = `${userInfo.email} 님 환영합니다!`;
-        userEmailElement.style.display = 'inline';  // 이메일 표시
-
-        // 로그아웃 버튼 표시
-        document.getElementById('logoutBtn').style.display = 'inline';
-
-        document.getElementById('generalUser').style.display = 'none';
-        document.getElementById('memberUser').style.display = 'none';
-        document.getElementById('adminUser').style.display = 'none';
-
-        if (userInfo.role === 'ADMIN') {
-            document.getElementById('adminUser').style.display = 'block';
-        } else if (userInfo.role === 'USER') {
-            document.getElementById('memberUser').style.display = 'block';
-        } else {
-            document.getElementById('generalUser').style.display = 'block';
-        }
-    }
-
-    // 토큰 재발급 요청 함수
-    function requestTokenReissue() {
-        axios.post('/reissue', {}, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            withCredentials: true  // 쿠키 포함 요청
-        })
-                .then(response => {
-                    if (response.status === 200) {
-                        console.log("토큰 재발급 성공:", response.data);
-
-                        // Authorization 헤더에서 새로운 Access Token 추출
-                        const authHeader = response.headers.authorization;
-                        if (authHeader && authHeader.startsWith('Bearer ')) {
-                            const newAccessToken = authHeader.split(' ')[1];
-
-                            // 새로운 Access Token을 로컬스토리지에 저장
-                            saveTokenToLocalStorage(newAccessToken);
-                            fetchUserInfo();
-                            console.log("토큰이 성공적으로 재발급되었습니다.");
-                        } else {
-                            console.error("Authorization 헤더가 없거나 형식이 잘못되었습니다.");
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error("토큰 재발급 실패:", error.response.data.message);
-                    alert(error.response.data.message)
-                    // alert("토큰 재발급 중 오류가 발생했습니다. 다시 시도해주세요.");
-                });
-    }
-
-    // 예제: 버튼 클릭 시 토큰 재발급 요청
-    document.getElementById('reissueTokenBtn').addEventListener('click', requestTokenReissue);
-</script>
+<script th:src="@{/js/index.js}" th:inline="javascript"></script>
 </html>

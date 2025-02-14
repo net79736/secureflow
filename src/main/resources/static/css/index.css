@@ -13,6 +13,19 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     border: 1px solid #ddd;
+    overflow: hidden; /* 넘치는 내용 숨김 */
+    word-wrap: break-word; /* 긴 텍스트 자동 줄바꿈 */
+}
+
+.token-display {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    max-width: 100%;
+    overflow: auto;
 }
 
 .header {
@@ -33,7 +46,20 @@ body {
 
 .links {
     margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
+
+.link-group {
+    display: flex;
+    gap: 10px;
+}
+
+#reissueTokenBtn {
+    margin-left: auto;
+}
+
 
 .links a, .links button {
     display: inline-block;
@@ -44,6 +70,7 @@ body {
     text-decoration: none;
     border-radius: 5px;
     transition: background-color 0.3s;
+    white-space: nowrap; /* 버튼 내 텍스트 줄바꿈 방지 */
 }
 
 .links a:hover {
