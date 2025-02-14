@@ -117,3 +117,6 @@ function requestTokenReissue() {
 
 // 예제: 버튼 클릭 시 토큰 재발급 요청
 document.getElementById('reissueTokenBtn').addEventListener('click', requestTokenReissue);
+
+// 페이지 자동 새로고침
+setInterval(fetchUserInfo, 5000);
