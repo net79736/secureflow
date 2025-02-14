@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
 <body>
-    <div th:fragment="auth" class="auth">
-        <a href="/login" id="loginLink">로그인</a>
-        <a href="/signup" id="signupLink">회원가입</a>
-        <span id="userEmail" style="display: none; margin-right: 10px;"></span>
-        <button id="logoutBtn" style="display: none;">로그아웃</button>
+    <div th:fragment="auth" class="navbar">
+        <div class="logo">
+            <a href="/">MyApp</a>
+        </div>
+        <div class="auth">
+            <a href="/login" id="loginLink">로그인</a>
+            <a href="/signup" id="signupLink">회원가입</a>
+            <span id="userEmail" style="display: none; margin-right: 10px;"></span>
+            <button id="logoutBtn" style="display: none;">로그아웃</button>
+        </div>
     </div>
 </body>
 </html>
