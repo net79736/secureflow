@@ -164,7 +164,10 @@
                 // 메인 페이지로 리디렉션
                 window.location.href = '/';
             } else {
-                // console.error("OAuth 로그인 실패:", event.data);
+                const message = event.data.message;
+                if (message) {
+                    alert(decodeURIComponent(message));
+                }
             }
         };
 
