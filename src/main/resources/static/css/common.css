@@ -35,3 +35,16 @@ footer {
     background: darkcyan;
 }
 
+button:disabled {
+    background-color: #cccccc !important; /* 연한 회색으로 변경 */
+    color: #666666 !important; /* 글자색 변경 */
+    cursor: not-allowed; /* 마우스 커서를 '금지' 모양으로 변경 */
+    opacity: 0.7; /* 살짝 흐리게 처리 */
+}
+
+button:disabled:hover {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed;
+}
+

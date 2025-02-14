@@ -164,5 +164,23 @@ function requestTokenReissue() {
         });
 }
 
+function enableAuthControls(...elementIds) {
+    elementIds.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.disabled = false; // 버튼 활성화
+        }
+    });
+}
+
+function disableAuthControls(...elementIds) {
+    elementIds.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.disabled = true; // 버튼 비활성화
+        }
+    });
+}
+
 // 페이지 자동 새로고침
 setInterval(fetchUserInfo, 5000);

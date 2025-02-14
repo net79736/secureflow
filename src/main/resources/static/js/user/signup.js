@@ -13,6 +13,7 @@ document.getElementById('emailVerifyBtn').addEventListener('click', function () 
         .then(response => {
             if (response.data.status) {
                 alert("이메일을 전송하였습니다.")
+                enableAuthControls("codeVerifyBtn");
             }
         })
         .catch(error => {
@@ -99,6 +100,7 @@ document.getElementById('codeVerifyBtn').addEventListener('click', function () {
 
 document.getElementById("checkDuplicateBtn").addEventListener("click", function () {
     clearMessage();  // 메시지 초기화
+    disableAuthControls("emailVerifyBtn", "codeVerifyBtn")
     const email = document.getElementById("email").value;
 
     // GET 요청으로 이메일 중복 확인
@@ -109,6 +111,7 @@ document.getElementById("checkDuplicateBtn").addEventListener("click", function 
         .then(response => {
             if (response.data.status) {
                 alert("사용가능한 이메일 입니다.");
+                enableAuthControls("emailVerifyBtn")
             }
         })
         .catch(error => {
@@ -117,5 +120,6 @@ document.getElementById("checkDuplicateBtn").addEventListener("click", function 
             } else {
                 alert(error.response.data.message);
             }
+            disableAuthControls("emailVerifyBtn", "codeVerifyBtn")
         });
 });
