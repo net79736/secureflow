@@ -7,11 +7,12 @@ import com.tdd.secureflow.oauth2.handler.CustomOauth2SuccessHandler;
 import com.tdd.secureflow.oauth2.handler.OAuth2LoginFailureHandler;
 import com.tdd.secureflow.oauth2.service.CustomOAuth2UserService;
 import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
-import com.tdd.secureflow.security.filter.TokenAuthenticationFilter;
+import com.tdd.secureflow.security.filter.JwtAuthorizationFilter;
 import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
 import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
 import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
 import com.tdd.secureflow.security.jwt.JwtProvider;
+import com.tdd.secureflow.security.jwt.exception.JwtExceptionFilter;
 import com.tdd.secureflow.security.service.CustomUserDetailsService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
+import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
 
 @Slf4j
 @Configuration
+//@EnableWebSecurity(debug = true)
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -62,6 +71,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final JwtExceptionFilter jwtExceptionFilter;
 
     @PostConstruct
     public void init() {
@@ -109,13 +119,14 @@ public class SecurityConfig {
                 .failureHandler(oAuth2LoginFailureHandler)
         );
 
+        // cors 설정
+        http.cors((corsCustomizer) -> corsCustomizer.configurationSource(configurationSource()));
+
         // JWT 인증 및 토큰 검증 필터 추가
-        http.addFilterAt(
-                        new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository),
-                        UsernamePasswordAuthenticationFilter.class
-                )
-                .addFilterAfter(new TokenAuthenticationFilter(jwtProvider), JwtAuthenticationFilter.class)
-                .addFilter(webConfig.corsFilter()); // CORS 필터 추가
+        http
+                .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
+                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
+                .addFilterBefore(new JwtAuthorizationFilter(jwtProvider), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
 
         // 로그아웃 설정
         http.logout(logout -> logout
@@ -151,6 +162,21 @@ public class SecurityConfig {
         // 로그인 실패 이유를 구체적으로 구분하고 싶을 때 사용하는 설정
         provider.setHideUserNotFoundExceptions(false);  // 예외 숨김 해제 (별도 Exception 으로 처리하기)
         return new ProviderManager(provider);
+    }
+
+    public CorsConfigurationSource configurationSource() {
+        System.out.println("configurationSource cors 설정이 SecurityFilterChain에 등록됨");
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedOriginPattern(frontUrl); // TODO_ 추후 변경 해야함 배포시
+        configuration.addAllowedOriginPattern("http://localhost:3000"); // TODO_ 추후 변경 해야함 배포시
+        configuration.setAllowCredentials(true);
+        configuration.addExposedHeader(HEADER_AUTHORIZATION);
+        configuration.addExposedHeader(REFRESH_TOKEN_KEY);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
 

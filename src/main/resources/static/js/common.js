@@ -101,6 +101,10 @@ fetchUserInfo();
 function fetchUserInfo() {
     const token = getTokenFromLocalStorage();
 
+    if (!token) {
+        return;
+    }
+
     axios.get('/api/me', {
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -119,7 +123,9 @@ function fetchUserInfo() {
                 // window.location.href = '/login';
                 console.log("회원 정보를 가져오는 데 실패했습니다.");
                 // 토큰 만료
-                if (error.response.data.status === "GONE") {
+                console.log(error.response.data);
+                console.log(error.response.status);
+                if (error.response.status === 410) {
                     requestTokenReissue();
                 }
             }
