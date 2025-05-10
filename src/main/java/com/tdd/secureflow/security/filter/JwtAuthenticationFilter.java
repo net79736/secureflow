@@ -102,6 +102,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
 
+            /**
+             * 쿠키 생성 및 저장되는 과정 설명:
+             * 1. /api/auth/login API 실행 시 response.addCookie()를 통해 응답 헤더에 Set-Cookie 가 설정된다.
+             * 2. 클라이언트(브라우저)가 해당 응답을 수신해야 쿠키가 실제로 브라우저에 저장된다.
+             * 3. 저장된 쿠키는 쿠키의 path와 일치하는 요청이 있을 때 자동으로 전송된다.
+             *    (예: TOKEN_REISSUE_PATH, LOGOUT_PATH에 접근 시 자동 포함됨)
+             * 4. 단, path가 "/reissue"로 설정된 쿠키는 "/reissue" 또는 그 하위 경로에만 전송되며, 다른 경로에서는 보이지 않는다.
+             *
+             * 이슈) 브라우저 개발자 도구에서 Application > Cookies 보려면:
+             * 해당 경로로 실제 요청(fetch, axios, 브라우저 주소창 등)이 한 번 이상 발생해야 그 경로 기준의 쿠키가 그 탭에서 노출됨.
+             */
             response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
             response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
 
