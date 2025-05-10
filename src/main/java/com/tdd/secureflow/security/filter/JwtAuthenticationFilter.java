@@ -110,8 +110,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
              *    (예: TOKEN_REISSUE_PATH, LOGOUT_PATH에 접근 시 자동 포함됨)
              * 4. 단, path가 "/reissue"로 설정된 쿠키는 "/reissue" 또는 그 하위 경로에만 전송되며, 다른 경로에서는 보이지 않는다.
              *
-             * 이슈) 브라우저 개발자 도구에서 Application > Cookies 보려면:
+             * 🔍 이슈) 브라우저 개발자 도구에서 Application > Cookies 보려면:
              * 해당 경로로 실제 요청(fetch, axios, 브라우저 주소창 등)이 한 번 이상 발생해야 그 경로 기준의 쿠키가 그 탭에서 노출됨.
+             *
+             * ⚠️ 프론트엔드(CORS 환경) 주의사항:
+             * - 서버에서 쿠키를 보내더라도, 클라이언트가 withCredentials: true 설정을 하지 않으면 쿠키가 저장되지 않음.
+             * - 예: axios.defaults.withCredentials = true;
+             * - 서버에서도 응답 헤더에 Access-Control-Allow-Credentials: true 가 설정되어야 함.
              */
             response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
             response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
