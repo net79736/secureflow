@@ -1,32 +1,5 @@
 package com.tdd.secureflow.security.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
-import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
-import com.tdd.secureflow.security.dto.CustomUserDetails;
-import com.tdd.secureflow.security.jwt.JwtProvider;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-
 import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
 import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
 import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
@@ -37,18 +10,57 @@ import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControlle
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.security.dto.CustomUserDetails;
+import com.tdd.secureflow.security.jwt.JwtProvider;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+
 
 @Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final RefreshRepository refreshRepository;
+    private final UUIDKeyGenerator uuidKeyGenerator;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, RefreshRepository refreshRepository) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator) {
         setFilterProcessesUrl("/auth/login");
         this.authenticationManager = authenticationManager;
         this.jwtProvider = jwtProvider;
         this.refreshRepository = refreshRepository;
+        this.uuidKeyGenerator = uuidKeyGenerator;
     }
 
     @Override
@@ -90,15 +102,20 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             // 권한 획득
             String role = auth.getAuthority();
 
+			// 리프레시 토큰 아이디 생성
+			String refreshTokenId = uuidKeyGenerator.generate();
+            customUserDetails.getUser().setRefreshTokenId(refreshTokenId); // TODO: 리팩토링 고려 author: jongwook
+
             // Authorization
-            String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), username, role);
-            String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), username, role);
+            String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, jwtProvider.getAccessTokenExpiration(), username, role, refreshTokenId);
+            String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), username, role, refreshTokenId);
 
             // 기존 리프레시 토큰 삭제
             refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(username));
+
             // 새로운 리프레시 토큰 등록
             Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-            refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(username, refreshToken, expiration));
+            refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(username, refreshToken, refreshTokenId, expiration));
 
             response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
 
@@ -118,8 +135,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
              * - 예: axios.defaults.withCredentials = true;
              * - 서버에서도 응답 헤더에 Access-Control-Allow-Credentials: true 가 설정되어야 함.
              */
-            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
 
             log.debug("print accessToken: {}", accessToken);
             log.debug("print role: {}", role);
@@ -127,7 +144,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             log.info("자체 서비스 로그인에 성공하였습니다.");
         } catch (InternalAuthenticationServiceException e) {
-            System.out.println("successfulAuthentication 메서드 에러 발생 : " + e.getMessage());
+            log.error("successfulAuthentication 메서드 에러 발생 : {}", e.getMessage());
         }
     }
 

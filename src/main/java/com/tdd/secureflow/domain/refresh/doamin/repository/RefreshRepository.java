@@ -11,4 +11,6 @@ public interface RefreshRepository {
     Refresh createRefresh(CreateRefreshByEmailAndRefreshAndExpirationParam param);
 
     void deleteRefresh(DeleteRefreshByEmailParam param);
+
+    Refresh findByRefreshTokenId(String refreshTokenId);
 }

@@ -1,11 +1,12 @@
 package com.tdd.secureflow.security.dto;
 
-import com.tdd.secureflow.domain.user.domain.model.User;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import com.tdd.secureflow.domain.user.domain.model.User;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -13,6 +14,10 @@ public class CustomUserDetails implements UserDetails {
 
     public CustomUserDetails(User user) {
         this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     @Override

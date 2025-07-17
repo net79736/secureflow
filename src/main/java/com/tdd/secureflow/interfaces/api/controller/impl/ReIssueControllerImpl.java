@@ -1,25 +1,27 @@
 package com.tdd.secureflow.interfaces.api.controller.impl;
 
-import com.tdd.secureflow.domain.common.base.ResponseDto;
-import com.tdd.secureflow.domain.common.base.ResponseStatus;
-import com.tdd.secureflow.domain.refresh.doamin.model.Tokens;
-import com.tdd.secureflow.domain.refresh.doamin.service.ReIssueCommandService;
-import com.tdd.secureflow.domain.support.error.CoreException;
-import com.tdd.secureflow.interfaces.api.controller.ReIssueController;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import static com.tdd.secureflow.domain.support.error.ErrorType.INTERNAL_SERVER_ERROR;
 import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
 import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
 import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
 import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
 import static com.tdd.secureflow.interfaces.CommonSecurityScheme.BEARER_SCHEME;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tdd.secureflow.domain.common.base.ResponseDto;
+import com.tdd.secureflow.domain.common.base.ResponseStatus;
+import com.tdd.secureflow.domain.refresh.doamin.model.Tokens;
+import com.tdd.secureflow.domain.refresh.doamin.service.ReIssueCommandService;
+import com.tdd.secureflow.domain.support.error.CoreException;
+import com.tdd.secureflow.interfaces.api.controller.ReIssueController;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -44,7 +46,7 @@ public class ReIssueControllerImpl implements ReIssueController {
             // Refresh Token 쿠키 추가
             response.addCookie(createCookie(
                     REFRESH_TOKEN_KEY,
-                    tokens.getRefreshToken(),
+                    tokens.getRefreshTokenId(),
                     TOKEN_REISSUE_PATH,
                     24 * 60 * 60,
                     true,
@@ -53,7 +55,7 @@ public class ReIssueControllerImpl implements ReIssueController {
 
             response.addCookie(createCookie(
                     REFRESH_TOKEN_KEY,
-                    tokens.getRefreshToken(),
+                    tokens.getRefreshTokenId(),
                     LOGOUT_PATH,
                     24 * 60 * 60,
                     true,

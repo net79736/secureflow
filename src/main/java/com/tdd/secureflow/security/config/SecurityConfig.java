@@ -1,22 +1,8 @@
 package com.tdd.secureflow.security.config;
 
-import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
-import com.tdd.secureflow.domain.user.domain.model.UserRole;
-import com.tdd.secureflow.interfaces.WebConfig;
-import com.tdd.secureflow.oauth2.handler.CustomOauth2SuccessHandler;
-import com.tdd.secureflow.oauth2.handler.OAuth2LoginFailureHandler;
-import com.tdd.secureflow.oauth2.service.CustomOAuth2UserService;
-import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
-import com.tdd.secureflow.security.filter.JwtAuthorizationFilter;
-import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
-import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
-import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
-import com.tdd.secureflow.security.jwt.JwtProvider;
-import com.tdd.secureflow.security.jwt.exception.JwtExceptionFilter;
-import com.tdd.secureflow.security.service.CustomUserDetailsService;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
+import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,8 +24,25 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
-import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
+import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.user.domain.model.UserRole;
+import com.tdd.secureflow.interfaces.WebConfig;
+import com.tdd.secureflow.oauth2.handler.CustomOauth2SuccessHandler;
+import com.tdd.secureflow.oauth2.handler.OAuth2LoginFailureHandler;
+import com.tdd.secureflow.oauth2.service.CustomOAuth2UserService;
+import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
+import com.tdd.secureflow.security.filter.JwtAuthorizationFilter;
+import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
+import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
+import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
+import com.tdd.secureflow.security.jwt.JwtProvider;
+import com.tdd.secureflow.security.jwt.exception.JwtExceptionFilter;
+import com.tdd.secureflow.security.service.CustomUserDetailsService;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -72,6 +75,7 @@ public class SecurityConfig {
     private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final UUIDKeyGenerator uuidKeyGenerator;
 
     @PostConstruct
     public void init() {
@@ -124,9 +128,9 @@ public class SecurityConfig {
 
         // JWT 인증 및 토큰 검증 필터 추가
         http
-                .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
-                .addFilterBefore(new JwtAuthorizationFilter(jwtProvider), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
+            .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
+            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository, uuidKeyGenerator), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
+            .addFilterBefore(new JwtAuthorizationFilter(jwtProvider, refreshRepository), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
 
         // 로그아웃 설정
         http.logout(logout -> logout

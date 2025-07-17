@@ -8,7 +8,7 @@ public class RefreshRepositoryParam {
 
     }
 
-    public record CreateRefreshByEmailAndRefreshAndExpirationParam(String email, String refresh, Date expiration) {
+    public record CreateRefreshByEmailAndRefreshAndExpirationParam(String email, String refresh, String refreshTokenId, Date expiration) {
 
     }
 

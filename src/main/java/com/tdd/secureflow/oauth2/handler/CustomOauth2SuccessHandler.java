@@ -1,29 +1,5 @@
 package com.tdd.secureflow.oauth2.handler;
 
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
-import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
-import com.tdd.secureflow.domain.user.domain.model.User;
-import com.tdd.secureflow.domain.user.repository.UserRepository;
-import com.tdd.secureflow.oauth2.model.CustomOAuth2User;
-import com.tdd.secureflow.security.jwt.JwtProvider;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-
 import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
 import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
 import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
@@ -34,6 +10,32 @@ import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControlle
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.user.domain.model.User;
+import com.tdd.secureflow.domain.user.repository.UserRepository;
+import com.tdd.secureflow.oauth2.model.CustomOAuth2User;
+import com.tdd.secureflow.security.jwt.JwtProvider;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Component
 public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -43,11 +45,13 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
+    private final UUIDKeyGenerator uuidKeyGenerator;
 
-    public CustomOauth2SuccessHandler(JwtProvider jwtProvider, UserRepository userRepository, RefreshRepository refreshRepository) {
+    public CustomOauth2SuccessHandler(JwtProvider jwtProvider, UserRepository userRepository, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator) {
         this.jwtProvider = jwtProvider;
         this.userRepository = userRepository;
         this.refreshRepository = refreshRepository;
+        this.uuidKeyGenerator = uuidKeyGenerator;
     }
 
     @Override
@@ -71,20 +75,23 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         log.info("onAuthenticationSuccess email: {}", user.getEmail());
         log.info("onAuthenticationSuccess role: {}", user.getRole());
 
+        // 리프레시 토큰 아이디 생성
+        String refreshTokenId = uuidKeyGenerator.generate();
+
         // Authorization
-        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), user.getEmail(), role);
-        String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), user.getEmail(), role);
+        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, jwtProvider.getAccessTokenExpiration(), user.getEmail(), role, refreshTokenId);
+        String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), user.getEmail(), role, refreshTokenId);
 
         // 기존 리프레시 토큰 삭제
         refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(user.getEmail()));
         // 새로운 리프레시 토큰 등록
-        Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-        refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(user.getEmail(), refreshToken, expiration));
+        Date expiration = new Date(System.currentTimeMillis() + jwtProvider.getRefreshTokenExpiration().toMillis());
+        refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(user.getEmail(), refreshToken, refreshTokenId, expiration));
 
         response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
 
-        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshToken, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
 
         // 팝업 창에서 부모 창으로 메시지 전달
         response.setContentType("text/html");

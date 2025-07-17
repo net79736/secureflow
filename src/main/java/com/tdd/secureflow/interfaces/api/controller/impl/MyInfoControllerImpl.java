@@ -1,27 +1,5 @@
 package com.tdd.secureflow.interfaces.api.controller.impl;
 
-import com.tdd.secureflow.domain.common.base.ResponseDto;
-import com.tdd.secureflow.domain.user.domain.model.User;
-import com.tdd.secureflow.domain.user.dto.UserCommand;
-import com.tdd.secureflow.domain.user.service.UserCommandService;
-import com.tdd.secureflow.domain.user.service.UserQueryService;
-import com.tdd.secureflow.interfaces.api.controller.MyInfoController;
-import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.SignUpRequest;
-import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.UserResponse;
-import com.tdd.secureflow.security.dto.CustomUserDetails;
-import com.tdd.secureflow.security.jwt.JwtProvider;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.Duration;
-
 import static com.tdd.secureflow.domain.common.base.ResponseStatus.SUCCESS;
 import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
 import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
@@ -32,6 +10,37 @@ import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControlle
 import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.TOKEN_REISSUE_PATH;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
+
+import java.util.Date;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tdd.secureflow.domain.common.base.ResponseDto;
+import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.user.domain.model.User;
+import com.tdd.secureflow.domain.user.dto.UserCommand;
+import com.tdd.secureflow.domain.user.service.UserCommandService;
+import com.tdd.secureflow.domain.user.service.UserQueryService;
+import com.tdd.secureflow.interfaces.api.controller.MyInfoController;
+import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.SignUpRequest;
+import com.tdd.secureflow.interfaces.api.dto.MyInfoControllerDto.UserResponse;
+import com.tdd.secureflow.security.dto.CustomUserDetails;
+import com.tdd.secureflow.security.jwt.JwtProvider;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -44,6 +53,10 @@ public class MyInfoControllerImpl implements MyInfoController {
     private final UserQueryService userQueryService;
 
     private final JwtProvider jwtProvider;
+
+    private final UUIDKeyGenerator uuidKeyGenerator;
+
+    private final RefreshRepository refreshRepository;
 
     @Override
     @PostMapping
@@ -62,15 +75,29 @@ public class MyInfoControllerImpl implements MyInfoController {
                 )
         );
 
-        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, Duration.ofSeconds(30), user.getEmail(), user.getRole().name());
+        // 리프레시 토큰 아이디 생성
+        String refreshTokenId = uuidKeyGenerator.generate();
+
+        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, jwtProvider.getAccessTokenExpiration(), user.getEmail(), user.getRole().name(), refreshTokenId);
         // 응답 헤더 설정
         httpServletResponse.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
-        String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, Duration.ofDays(1), user.getEmail(), user.getRole().name());
+        String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), user.getEmail(), user.getRole().name(), refreshTokenId);
+
+        // [추가] 리프레시 토큰 저장
+        Date expiration = new Date(System.currentTimeMillis() + jwtProvider.getRefreshTokenExpiration().toMillis());
+        refreshRepository.createRefresh(
+            new CreateRefreshByEmailAndRefreshAndExpirationParam(
+                user.getEmail(),
+                refreshToken,
+                refreshTokenId,
+                expiration
+            )
+        );
 
         // Refresh Token 쿠키 추가
         httpServletResponse.addCookie(createCookie(
                 REFRESH_TOKEN_KEY,
-                refreshToken,
+                refreshTokenId,
                 TOKEN_REISSUE_PATH,
                 24 * 60 * 60,
                 true,
@@ -79,7 +106,7 @@ public class MyInfoControllerImpl implements MyInfoController {
 
         httpServletResponse.addCookie(createCookie(
                 REFRESH_TOKEN_KEY,
-                refreshToken,
+                refreshTokenId,
                 LOGOUT_PATH,
                 24 * 60 * 60,
                 true,

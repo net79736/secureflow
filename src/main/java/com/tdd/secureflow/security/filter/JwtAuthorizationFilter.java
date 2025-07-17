@@ -1,16 +1,12 @@
 package com.tdd.secureflow.security.filter;
 
-import com.tdd.secureflow.domain.user.domain.model.User;
-import com.tdd.secureflow.domain.user.domain.model.UserRole;
-import com.tdd.secureflow.security.dto.CustomUserDetails;
-import com.tdd.secureflow.security.jwt.JwtProvider;
-import io.micrometer.common.util.StringUtils;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_ACCESS_TOKEN;
+import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_TOKEN_TYPE;
+import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
+import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
+
+import java.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,17 +14,27 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import com.tdd.secureflow.domain.refresh.doamin.model.Refresh;
+import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.support.error.CoreException;
+import com.tdd.secureflow.domain.user.domain.model.User;
+import com.tdd.secureflow.domain.user.domain.model.UserRole;
+import com.tdd.secureflow.security.dto.CustomUserDetails;
+import com.tdd.secureflow.security.jwt.JwtProvider;
 
-import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_ACCESS_TOKEN;
-import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_TOKEN_TYPE;
-import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
-import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
+import io.micrometer.common.util.StringUtils;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
+    private final RefreshRepository refreshRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,12 +52,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             Boolean expired = jwtProvider.isExpired(accessToken);
             if (expired) {
                 log.warn("토큰이 만료되었습니다.");
-//                sendErrorResponse(response, HttpStatus.GONE, ACCESS_TOKEN_EXPIRED.name());
-//                return;
                 throw new JwtException("ACCESS TOKEN IS EXPIRED");
             }
 
             String accessCategory = jwtProvider.getCategory(accessToken);
+            // 리프레시 토큰으로 요청하는 경우 예외 처리
             if (!TOKEN_CATEGORY_ACCESS.equals(accessCategory)) {
                 sendErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_TOKEN_TYPE.name());
                 return;
@@ -60,10 +65,27 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             String email = jwtProvider.getEmail(accessToken);
             String role = jwtProvider.getRole(accessToken);
             String status = jwtProvider.getStatus(accessToken);
+            String refreshTokenId = jwtProvider.getRefreshTokenId(accessToken);
 
             log.info("email : " + email);
             log.info("role : " + role);
             log.info("status : " + status);
+
+            // 현재 토큰이 유효한지 확인
+            // TODO: 중복 로그인 로직 disabled 처리함 author jongwook
+            try {
+                // 리프레시 토큰 아이디로 리프레시 토큰 조회
+                Refresh refresh = refreshRepository.findByRefreshTokenId(refreshTokenId);
+                // 값이 없으면 다른 기기에서 로그인하여 토큰이 만료된 것으로 처리
+                if (refresh == null || refresh.getRefreshTokenId() == null) {
+                    log.warn("유효하지 않은 토큰 - refreshTokenId: {}", refreshTokenId);
+                    throw new JwtException("SESSION_REVOKED_BY_NEW_LOGIN");
+                }
+                log.debug("토큰 유효성 검증 성공 - refreshToken: {}, refreshTokenId: {}", refresh.getRefresh(), refresh.getRefreshTokenId());
+            } catch (CoreException e) {
+                // 토큰이 유효하지 않으면 다른 기기에서 로그인한 것으로 간주
+                throw new JwtException("SESSION_REVOKED_BY_NEW_LOGIN");
+            }
 
             User user = User.builder()
                     .email(email)
