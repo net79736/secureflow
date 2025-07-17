@@ -165,8 +165,13 @@ function requestTokenReissue() {
         })
         .catch(error => {
             console.error("토큰 재발급 실패:", error.response.data.message);
-            alert(error.response.data.message)
-            // alert("토큰 재발급 중 오류가 발생했습니다. 다시 시도해주세요.");
+            alert("토큰이 만료되었습니다. 다시 로그인해주세요.");
+            
+            // 로컬스토리지에서 토큰 삭제
+            removeTokenFromLocalStorage();
+            
+            // 로그인 페이지로 리다이렉트
+            window.location.href = '/login';
         });
 }
 
