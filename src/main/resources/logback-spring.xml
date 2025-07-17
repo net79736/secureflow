@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %customHighlight(%-5level) [%thread][%X{sessionId}] %logger{0}: %msg%n" />
+    <conversionRule conversionWord="customHighlight" converterClass="com.tdd.secureflow.log.CustomHighlightingConverter"/>
+
+    <!-- 
+        ConsoleAppender 설정
+
+        이 코드는 Logback의 ConsoleAppender 설정입니다.
+        ConsoleAppender는 로그를 콘솔(터미널)에 출력하는 역할을 합니다.
+        name="CONSOLE"은 이 appender의 이름을 지정한 것이고,
+        class="ch.qos.logback.core.ConsoleAppender"는 Logback에서 제공하는 콘솔 출력용 appender를 사용한다는 의미입니다.
+
+        <encoder>는 로그 메시지의 출력 형식을 지정합니다.
+        <pattern>${APP_CONSOLE_LOG_PATTERN}</pattern>은 application.yml 또는 환경 변수 등에서 정의한
+        APP_CONSOLE_LOG_PATTERN 값을 로그 출력 패턴으로 사용하겠다는 뜻입니다.
+        (예: 시간, 로그레벨, 클래스명, 메시지 등 원하는 형식으로 로그를 출력할 수 있습니다.)
+
+        즉, 이 설정은 콘솔에 로그를 출력할 때 사용할 appender와 출력 형식을 정의한 것입니다.
+    -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>${CONSOLE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+
+    <!-- 
+        jdbc 관련 로그를 비활성화합니다. 
+        (SQL 실행 등 JDBC 내부 로그가 너무 많아 개발 시 보기 불편할 수 있음)
+    -->
+    <logger name="jdbc" level="OFF" additive="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        jdbc.sqlonly: 실제 실행되는 SQL문만 DEBUG 레벨로 출력합니다.
+        (SQL 쿼리만 보고 싶을 때 유용)
+    -->
+    <logger name="jdbc.sqlonly" level="DEBUG" additive="false" >
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        jdbc.sqltiming: SQL 실행 시간 관련 로그를 비활성화합니다.
+        (쿼리 실행 시간까지 보고 싶지 않을 때 OFF)
+    -->
+    <logger name="jdbc.sqltiming" level="OFF" additive="false" >
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        org.hibernate.SQL: 하이버네이트가 실행하는 SQL문을 DEBUG 레벨로 출력합니다.
+        (JPA/Hibernate 사용 시 실제 쿼리 확인용)
+    -->
+    <logger name="org.hibernate.SQL" level="DEBUG" additive="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        com.tdd.secureflow.controller: 컨트롤러 계층 로그를 DEBUG 레벨로 출력합니다.
+        (요청/응답 등 컨트롤러 동작 확인)
+    -->
+    <logger name="com.tdd.secureflow.controller" level="DEBUG" additive="false" >
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        com.tdd.secureflow.service: 서비스 계층 로그를 DEBUG 레벨로 출력합니다.
+        (비즈니스 로직 동작 확인)
+    -->
+    <logger name="com.tdd.secureflow.service" level="DEBUG" additive="false" >
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- 
+        com.tdd.secureflow.domain: 도메인 계층 로그를 DEBUG 레벨로 출력합니다.
+        (도메인 모델, 리포지토리 등 상세 동작 확인)
+    -->
+    <logger name="com.tdd.secureflow.domain" level="DEBUG" additive="false" >
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

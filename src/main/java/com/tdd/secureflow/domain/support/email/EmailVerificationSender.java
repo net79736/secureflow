@@ -1,31 +1,35 @@
 package com.tdd.secureflow.domain.support.email;
 
-import com.tdd.secureflow.domain.mail.model.EmailVerificationCode;
-import com.tdd.secureflow.domain.support.error.CoreException;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import static com.tdd.secureflow.domain.support.error.CoreException.createErrorJson;
+import static com.tdd.secureflow.domain.support.error.ErrorType.Email.EMAIL_CODE_MISMATCH;
+import static com.tdd.secureflow.domain.support.error.ErrorType.Email.EMAIL_CODE_NOT_FOUND;
+import static com.tdd.secureflow.domain.support.error.ErrorType.Email.EMAIL_SEND_FAILED;
+import static java.time.LocalDateTime.now;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.tdd.secureflow.domain.support.error.CoreException.createErrorJson;
-import static com.tdd.secureflow.domain.support.error.ErrorType.Email.*;
-import static java.time.LocalDateTime.now;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import com.tdd.secureflow.domain.mail.model.EmailVerificationCode;
+import com.tdd.secureflow.domain.support.error.CoreException;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EmailVerificationSender {
-    @Value("${SENDER_EMAIL}")
+    @Value("${spring.mail.username}")
     private String senderEmail;
     private final JavaMailSender javaMailSender;
     private static final int EXPIRATION_MINUTES = 5; // 유효 시간 (5분)
