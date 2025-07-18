@@ -1,9 +1,10 @@
 package com.tdd.secureflow.domain.support.error;
 
 
+import org.springframework.boot.logging.LogLevel;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.boot.logging.LogLevel;
 
 @AllArgsConstructor
 @Getter
@@ -12,13 +13,14 @@ public enum ErrorType implements IErrorType {
     INVALID_REQUEST(ErrorCode.BAD_REQUEST, "유효하지 않은 요청입니다.", LogLevel.WARN),
     UNAUTHORIZED_ACCESS(ErrorCode.UNAUTHORIZED, "인증되지 않은 접근입니다.", LogLevel.ERROR),
     FORBIDDEN_ACCESS(ErrorCode.FORBIDDEN, "권한이 없는 접근입니다.", LogLevel.ERROR),
-    ACCESS_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "어세스 토큰이 만료되었습니다.", LogLevel.WARN),
-    INVALID_ACCESS_TOKEN(ErrorCode.BAD_REQUEST, "유효하지 않은 어세스 토큰입니다.", LogLevel.WARN),
-    REFRESH_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다.", LogLevel.WARN),
-    REFRESH_TOKEN_NOT_FOUND(ErrorCode.BAD_REQUEST, "리프레시 토큰이 존재하지 않습니다.", LogLevel.WARN),
-    INVALID_REFRESH_TOKEN(ErrorCode.BAD_REQUEST, "유효하지 않은 리프레시 토큰입니다.", LogLevel.WARN),
-    INVALID_TOKEN_TYPE(ErrorCode.BAD_REQUEST, "잘못된 토큰 유형 입니다.", LogLevel.ERROR),
-    INTERNAL_SERVER_ERROR(ErrorCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.", LogLevel.ERROR);
+    INTERNAL_SERVER_ERROR(ErrorCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.", LogLevel.ERROR),
+    SESSION_REVOKED_BY_NEW_LOGIN(ErrorCode.UNAUTHORIZED, "다른 기기에서 로그인하여 세션이 만료되었습니다.", LogLevel.WARN),
+    ACCESS_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "ACCESS_TOKEN_EXPIRED", LogLevel.WARN),
+    INVALID_ACCESS_TOKEN(ErrorCode.BAD_REQUEST, "INVALID_ACCESS_TOKEN", LogLevel.WARN),
+    REFRESH_TOKEN_EXPIRED(ErrorCode.UNAUTHORIZED, "REFRESH_TOKEN_EXPIRED", LogLevel.WARN),
+    REFRESH_TOKEN_NOT_FOUND(ErrorCode.BAD_REQUEST, "REFRESH_TOKEN_NOT_FOUND", LogLevel.WARN),
+    INVALID_REFRESH_TOKEN(ErrorCode.BAD_REQUEST, "INVALID_REFRESH_TOKEN", LogLevel.WARN),
+    INVALID_TOKEN_TYPE(ErrorCode.BAD_REQUEST, "INVALID_TOKEN_TYPE", LogLevel.ERROR);
 
     private final ErrorCode code;
     private final String message;

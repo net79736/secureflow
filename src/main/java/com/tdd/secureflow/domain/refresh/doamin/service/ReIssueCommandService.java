@@ -29,6 +29,7 @@ import com.tdd.secureflow.domain.support.error.CoreException;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -129,6 +130,9 @@ public class ReIssueCommandService {
         } catch (CoreException e) {
             // CoreException 그대로 던짐
             log.error("CoreException 은 그대로 던짐 : {}", e.getMessage());
+            throw e;
+        } catch (JwtException e) {
+            log.error("JwtException 은 그대로 던짐 : {}", e.getMessage());
             throw e;
         } catch (Exception e) {
             // 기타 예외는 CoreException 래핑

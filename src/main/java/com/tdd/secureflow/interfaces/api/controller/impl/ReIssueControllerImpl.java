@@ -18,6 +18,7 @@ import com.tdd.secureflow.domain.refresh.doamin.service.ReIssueCommandService;
 import com.tdd.secureflow.domain.support.error.CoreException;
 import com.tdd.secureflow.interfaces.api.controller.ReIssueController;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,9 @@ public class ReIssueControllerImpl implements ReIssueController {
             // 서비스에서 발생한 CoreException 을 그대로 재던짐
             log.error("서비스에서 발생한 CoreException");
             log.error(e.getMessage());
+            throw e;
+        } catch (JwtException e) {
+            log.error("JwtException 은 그대로 던짐 : {}", e.getMessage());
             throw e;
         } catch (Exception e) {
             // 일반 예외는 CoreException 으로 에러를 던짐

@@ -1,7 +1,9 @@
 package com.tdd.secureflow.security.filter;
 
+import static com.tdd.secureflow.domain.support.error.ErrorType.ACCESS_TOKEN_EXPIRED;
 import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_ACCESS_TOKEN;
 import static com.tdd.secureflow.domain.support.error.ErrorType.INVALID_TOKEN_TYPE;
+import static com.tdd.secureflow.domain.support.error.ErrorType.SESSION_REVOKED_BY_NEW_LOGIN;
 import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
 import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
 
@@ -11,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.tdd.secureflow.domain.refresh.doamin.model.Refresh;
@@ -22,6 +23,7 @@ import com.tdd.secureflow.domain.user.domain.model.UserRole;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 
+import io.jsonwebtoken.JwtException;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -52,7 +54,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             Boolean expired = jwtProvider.isExpired(accessToken);
             if (expired) {
                 log.warn("토큰이 만료되었습니다.");
-                throw new JwtException("ACCESS TOKEN IS EXPIRED");
+                throw new JwtException(ACCESS_TOKEN_EXPIRED.name());
             }
 
             String accessCategory = jwtProvider.getCategory(accessToken);
@@ -79,12 +81,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 // 값이 없으면 다른 기기에서 로그인하여 토큰이 만료된 것으로 처리
                 if (refresh == null || refresh.getRefreshTokenId() == null) {
                     log.warn("유효하지 않은 토큰 - refreshTokenId: {}", refreshTokenId);
-                    throw new JwtException("SESSION_REVOKED_BY_NEW_LOGIN");
+                    throw new JwtException(SESSION_REVOKED_BY_NEW_LOGIN.name());
                 }
                 log.debug("토큰 유효성 검증 성공 - refreshToken: {}, refreshTokenId: {}", refresh.getRefresh(), refresh.getRefreshTokenId());
             } catch (CoreException e) {
                 // 토큰이 유효하지 않으면 다른 기기에서 로그인한 것으로 간주
-                throw new JwtException("SESSION_REVOKED_BY_NEW_LOGIN");
+                throw new JwtException(SESSION_REVOKED_BY_NEW_LOGIN.name());
             }
 
             User user = User.builder()
