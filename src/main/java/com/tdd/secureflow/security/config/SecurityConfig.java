@@ -105,6 +105,19 @@ public class SecurityConfig {
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)        // FrameOptions 비활성화
         );
 
+
+        /**
+         * [ HTTP Basic 인증 비활성화 설정 ]
+         * * 1. httpBasic 이란?
+         * - 브라우저가 사용자에게 ID/PW를 요구할 때 띄우는 '기본 팝업창' 인증 방식입니다.
+         * - 인증 정보(ID:PW)를 Base64로 인코딩하여 HTTP Header(Authorization)에 실어 보냅니다.
+         * * 2. 왜 .disable() 하는가?
+         * - 현대적인 웹(SPA, Mobile)에서는 브라우저 기본 팝업보다 직접 디자인한 '로그인 페이지'를 선호합니다.
+         * - JWT(JSON Web Token) 등 토큰 기반 인증을 사용할 경우, 별도의 팝업 인증이 필요 없습니다.
+         * - 보안상 Stateless한 API 서버를 구축할 때 세션/쿠키 방식의 기본 인증을 지양하기 위함입니다.
+         * * 3. 보안 주의사항
+         * - httpBasic은 데이터를 암호화하지 않고 인코딩만 하므로, HTTPS가 필수입니다.
+         */
         // 기본 보안 설정 비활성화
         http.logout((auth) -> auth.disable()) // 로그아웃 비활성화
                 .csrf((auth) -> auth.disable()) // csrf disable
