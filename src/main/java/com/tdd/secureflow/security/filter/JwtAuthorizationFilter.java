@@ -32,6 +32,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 모든 주소에서 동작함 (토큰 검증)
+ *
+ * successfulAuthentication 메서드에서는 로그인 시 JWT를 생성하지만, 클라이언트가 서버에 요청할 때 이 토큰이 유효한지 검증하는 과정이 필요합니다.
+ * JWTFilter는 이 검증 작업을 수행합니다.
+ *
+ * 사용자가 로그인한 후, 이후의 요청에서 이 JWT를 사용하여 사용자 인증을 계속 유지해야 합니다.
+ * JWTFilter가 각 요청을 가로채어 JWT의 유효성을 확인하고, 유효하다면 인증 정보를 SecurityContextHolder에 설정하는 역할을 합니다.
+ *
+ * 즉, 로그인 과정에서 JWT를 생성하는 것은 첫 번째 단계이고, 그 이후의 요청에서 JWT의 유효성을 검사하고 인증 정보를 설정하는 것은 또 다른 중요한 단계입니다.
+ * 이 두 과정이 함께 작동하여 전체적인 인증 흐름이 완성되는 것입니다.
+ *
+ * 결론적으로, JWTFilter는 JWT의 유효성을 검증하고, 이를 통해 요청을 안전하게 처리하기 위한 필수적인 컴포넌트입니다.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
@@ -94,9 +108,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     .role(UserRole.valueOf(role))
                     .build();
 
+            // CustomUserDetails 객체 생성
             CustomUserDetails customUserDetails = new CustomUserDetails(user);
+            // 스프링 시큐리티 인증 토큰 생성
             Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
+            // 세션에 사용자 등록 (인증 정보 저장)
             SecurityContextHolder.getContext().setAuthentication(authToken);
             log.info("SecurityContext 에 인증 정보 저장 완료");
         }
