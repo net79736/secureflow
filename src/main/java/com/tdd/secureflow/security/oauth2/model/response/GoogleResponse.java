@@ -1,11 +1,11 @@
-package com.tdd.secureflow.oauth2.model.response;
+package com.tdd.secureflow.security.oauth2.model.response;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Map;
 
-import static com.tdd.secureflow.oauth2.OAuth2ServiceProvider.GOOGLE;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.GOOGLE;
 
 public class GoogleResponse implements OAuth2Response {
 

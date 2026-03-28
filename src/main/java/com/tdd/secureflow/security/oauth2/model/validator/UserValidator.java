@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.model.validator;
+package com.tdd.secureflow.security.oauth2.model.validator;
 
 import java.util.regex.Pattern;
 

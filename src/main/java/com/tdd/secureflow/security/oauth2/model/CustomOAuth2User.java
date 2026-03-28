@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.model;
+package com.tdd.secureflow.security.oauth2.model;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

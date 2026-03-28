@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.handler;
+package com.tdd.secureflow.security.oauth2.handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

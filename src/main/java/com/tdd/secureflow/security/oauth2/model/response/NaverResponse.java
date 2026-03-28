@@ -1,13 +1,13 @@
-package com.tdd.secureflow.oauth2.model.response;
+package com.tdd.secureflow.security.oauth2.model.response;
 
-import com.tdd.secureflow.oauth2.model.validator.UserValidator;
+import com.tdd.secureflow.security.oauth2.model.validator.UserValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Map;
 
-import static com.tdd.secureflow.oauth2.OAuth2ServiceProvider.NAVER;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.NAVER;
 import static org.apache.commons.lang3.math.NumberUtils.toInt;
 
 @Slf4j

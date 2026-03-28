@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.handler;
+package com.tdd.secureflow.security.oauth2.handler;
 
 import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
 import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
@@ -28,7 +28,7 @@ import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.Delet
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
-import com.tdd.secureflow.oauth2.model.CustomOAuth2User;
+import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 
 import jakarta.servlet.ServletException;

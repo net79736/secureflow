@@ -1,4 +1,4 @@
-package com.tdd.secureflow.security.config;
+package com.tdd.secureflow.config;
 
 import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
 import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
@@ -28,9 +28,6 @@ import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
 import com.tdd.secureflow.interfaces.WebConfig;
-import com.tdd.secureflow.oauth2.handler.CustomOauth2SuccessHandler;
-import com.tdd.secureflow.oauth2.handler.OAuth2LoginFailureHandler;
-import com.tdd.secureflow.oauth2.service.CustomOAuth2UserService;
 import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
 import com.tdd.secureflow.security.filter.JwtAuthorizationFilter;
 import com.tdd.secureflow.security.handler.AuthenticationEntryPointHandler;
@@ -38,6 +35,9 @@ import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
 import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import com.tdd.secureflow.security.jwt.exception.JwtExceptionFilter;
+import com.tdd.secureflow.security.oauth2.handler.CustomOauth2SuccessHandler;
+import com.tdd.secureflow.security.oauth2.handler.OAuth2LoginFailureHandler;
+import com.tdd.secureflow.security.oauth2.service.CustomOAuth2UserService;
 import com.tdd.secureflow.security.service.CustomUserDetailsService;
 
 import jakarta.annotation.PostConstruct;

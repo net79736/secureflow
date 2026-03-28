@@ -1,7 +1,7 @@
 package com.tdd.secureflow.domain.user.domain.model;
 
 import com.tdd.secureflow.domain.support.error.CoreException;
-import com.tdd.secureflow.oauth2.OAuth2ServiceProvider;
+import com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

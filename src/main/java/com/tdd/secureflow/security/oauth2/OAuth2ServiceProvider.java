@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2;
+package com.tdd.secureflow.security.oauth2;
 
 public class OAuth2ServiceProvider {
     public static final String NAVER = "naver";

@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.exception;
+package com.tdd.secureflow.security.oauth2.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

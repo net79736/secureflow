@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.model.response;
+package com.tdd.secureflow.security.oauth2.model.response;
 
 import java.time.LocalDate;
 

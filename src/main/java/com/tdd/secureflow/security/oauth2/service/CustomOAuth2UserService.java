@@ -1,4 +1,4 @@
-package com.tdd.secureflow.oauth2.service;
+package com.tdd.secureflow.security.oauth2.service;
 
 import com.tdd.secureflow.domain.support.error.CoreException;
 import com.tdd.secureflow.domain.user.domain.model.User;
@@ -6,11 +6,11 @@ import com.tdd.secureflow.domain.user.domain.model.UserType;
 import com.tdd.secureflow.domain.user.dto.UserRepositoryParam;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
 import com.tdd.secureflow.global.util.PasswordUtil;
-import com.tdd.secureflow.oauth2.exception.ExistingUserAuthenticationException;
-import com.tdd.secureflow.oauth2.model.CustomOAuth2User;
-import com.tdd.secureflow.oauth2.model.response.GoogleResponse;
-import com.tdd.secureflow.oauth2.model.response.NaverResponse;
-import com.tdd.secureflow.oauth2.model.response.OAuth2Response;
+import com.tdd.secureflow.security.oauth2.exception.ExistingUserAuthenticationException;
+import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
+import com.tdd.secureflow.security.oauth2.model.response.GoogleResponse;
+import com.tdd.secureflow.security.oauth2.model.response.NaverResponse;
+import com.tdd.secureflow.security.oauth2.model.response.OAuth2Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -22,8 +22,8 @@ import java.util.Map;
 
 import static com.tdd.secureflow.domain.support.error.ErrorType.Auth.UNSUPPORTED_OAUTH_PROVIDER;
 import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
-import static com.tdd.secureflow.oauth2.OAuth2ServiceProvider.GOOGLE;
-import static com.tdd.secureflow.oauth2.OAuth2ServiceProvider.NAVER;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.GOOGLE;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.NAVER;
 
 @Slf4j
 @Service

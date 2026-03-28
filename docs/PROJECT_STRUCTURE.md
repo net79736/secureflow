@@ -55,18 +55,17 @@ com.example.tdd.secureflow/
 │        └── [domain]/                               # 도메인
 │            └── impl/                               # 구현체
 │            
-├── oauth2/                                        # OAuth2 모듈
-│   ├── exception/                                 # OAuth2 예외
-│   ├── handler/                                   # OAuth2 핸들러
-│   ├── model/                                     # OAuth2 모델
-│   └── service/                                   # OAuth2 서비스
-│       
-└── security/                                      # 보안 모듈
+└── security/                                      # 보안 모듈 (JWT·OAuth2·필터·설정)
     ├── config/                                    # 보안 설정
     ├── dto/                                       # 보안 DTO
     ├── filter/                                    # 보안 필터
     ├── handler/                                   # 보안 핸들러
     ├── jwt/                                       # JWT 처리
     │   └── model/                                 # JWT 모델
+    ├── oauth2/                                    # OAuth2 (소셜 로그인)
+    │   ├── exception/
+    │   ├── handler/
+    │   ├── model/
+    │   └── service/
     └── service/                                   # 보안 서비스
 ```
