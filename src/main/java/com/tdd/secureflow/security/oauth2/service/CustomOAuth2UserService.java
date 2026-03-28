@@ -1,5 +1,18 @@
 package com.tdd.secureflow.security.oauth2.service;
 
+import static com.tdd.secureflow.domain.support.error.ErrorType.Auth.UNSUPPORTED_OAUTH_PROVIDER;
+import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.GOOGLE;
+import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.NAVER;
+
+import java.util.Map;
+
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+
 import com.tdd.secureflow.domain.support.error.CoreException;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.domain.model.UserType;
@@ -11,19 +24,8 @@ import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 import com.tdd.secureflow.security.oauth2.model.response.GoogleResponse;
 import com.tdd.secureflow.security.oauth2.model.response.NaverResponse;
 import com.tdd.secureflow.security.oauth2.model.response.OAuth2Response;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Service;
-
-import java.util.Map;
-
-import static com.tdd.secureflow.domain.support.error.ErrorType.Auth.UNSUPPORTED_OAUTH_PROVIDER;
-import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
-import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.GOOGLE;
-import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.NAVER;
 
 @Slf4j
 @Service
@@ -42,8 +44,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("CustomOAuth2UserService > Oauth2User Request: {}", oAuth2User.toString());
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User.getAttributes());
-
+        OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User.getAttributes());      
+        
         // 지원하지 않는 PROVIDER
         if (oAuth2Response == null) {
             throw new CoreException(UNSUPPORTED_OAUTH_PROVIDER);

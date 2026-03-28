@@ -18,6 +18,8 @@ import java.util.Iterator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +30,8 @@ import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.Delet
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
-import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 import com.tdd.secureflow.security.jwt.JwtProvider;
+import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,12 +48,14 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
     private final UUIDKeyGenerator uuidKeyGenerator;
+    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
-    public CustomOauth2SuccessHandler(JwtProvider jwtProvider, UserRepository userRepository, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator) {
+    public CustomOauth2SuccessHandler(JwtProvider jwtProvider, UserRepository userRepository, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator, OAuth2AuthorizedClientService oAuth2AuthorizedClientService) {
         this.jwtProvider = jwtProvider;
         this.userRepository = userRepository;
         this.refreshRepository = refreshRepository;
         this.uuidKeyGenerator = uuidKeyGenerator;
+        this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
     }
 
     @Override
@@ -65,6 +69,13 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
+
+        // 이 시점에 이 code 와 state 값들은 이미 accessToken 과 교환해 버렸으므로  사용할 수 없는 값들이다.
+        // String code = request.getParameter("code");
+        // String state = request.getParameter("state");
+
+        System.out.println("getTokens 호출");
+        getTokens(authentication);
 
         log.info("onAuthenticationSuccess email: {}", email);
         log.info("onAuthenticationSuccess role: {}", role);
@@ -108,5 +119,30 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         response.getWriter().write(script);
 
         log.debug("Oauth 로그인에 성공하였습니다.");
+    }
+
+    /**
+     * 현재 인증된 유저의 accessToken 과 refreshToken 을 가져온다.
+     * @param authentication 인증된 유저
+     * @return accessToken 과 refreshToken
+     */
+    public void getTokens(Authentication authentication) {
+        // 2. 현재 인증된 유저의 '바구니'를 로드합니다.
+        OAuth2AuthorizedClient client = oAuth2AuthorizedClientService.loadAuthorizedClient(
+                "naver", // registrationId
+                authentication.getName() // 유저 식별값
+        );
+    
+        if (client != null) {
+            // Access Token 꺼내기
+            String access = client.getAccessToken().getTokenValue();
+            log.info("accessToken: {}", access);
+
+            // Refresh Token 꺼내기 (드디어 찾았습니다!)
+            if (client.getRefreshToken() != null) {
+                String refresh = client.getRefreshToken().getTokenValue();
+                System.out.println("찾았다 리프레시 토큰: " + refresh);
+            }
+        }
     }
 }
