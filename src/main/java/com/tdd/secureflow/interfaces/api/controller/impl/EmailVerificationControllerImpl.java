@@ -28,7 +28,11 @@ public class EmailVerificationControllerImpl implements EmailVerificationControl
     @PostMapping("/send")
     public ResponseEntity<ResponseDto> sendVerification(@Valid @RequestBody SendVerificationEmailRequest request, BindingResult bindingResult) {
         log.info("send-certification email: {}", request.email());
+        // [디버그] 브레이크포인트 ① — Tomcat HTTP 스레드 (예: http-nio-8082-exec-1)
+        log.info("[mail-async-flow] ① controller BEFORE service | thread={} | email={}", Thread.currentThread().getName(), request.email());
         emailVerificationService.send(request.email());
+        // [디버그] 브레이크포인트 ② — 아직 같은 HTTP 스레드. sendAsync 본문은 아직 끝나지 않았을 수 있음
+        log.info("[mail-async-flow] ② controller AFTER service return | thread={} (①과 이름이 같아야 정상)", Thread.currentThread().getName());
 
         return ResponseEntity.ok(new ResponseDto(SUCCESS.getValue(), "이메일 인증 코드 전송 성공", null));
     }

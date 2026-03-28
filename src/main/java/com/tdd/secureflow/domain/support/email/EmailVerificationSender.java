@@ -65,6 +65,8 @@ public class EmailVerificationSender {
      * @param email 수신자 이메일
      */
     public void send(String email) {
+        // [디버그] 브레이크포인트 ⑥ — ⑤와 같은 스레드(실제 발송·Thymeleaf·SMTP)
+        log.info("[mail-async-flow] ⑥ EmailVerificationSender.send | thread={} | to={}", Thread.currentThread().getName(), email);
         log.info("Sending email to {}", email);
 
         try {
