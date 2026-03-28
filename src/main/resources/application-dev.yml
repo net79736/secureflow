@@ -11,9 +11,9 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:security}?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:security}?characterEncoding=UTF-8&serverTimezone=UTC
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:1234}
+    password: ${DB_PASSWORD:9090}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: ${JPA_SHOW_SQL:true}
@@ -28,6 +28,8 @@ spring:
         highlight_sql: ${JPA_HIGHLIGHT_SQL:true}
 
 logging:
+  file:
+    path: ${LOG_PATH:logs/secureflow}
   level:
     org.hibernate.SQL: ${LOGGING_LEVEL_SQL:DEBUG}  # 실행되는 SQL 로그 출력
     org.hibernate.orm.jdbc.bind: ${LOGGING_LEVEL_BIND:TRACE}  # SQL 바인딩된 파라미터 값 출력
