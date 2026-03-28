@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class EmailVerificationSender {
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.from}")
     private String senderEmail;
     private final JavaMailSender javaMailSender;
     private static final int EXPIRATION_MINUTES = 5; // 유효 시간 (5분)

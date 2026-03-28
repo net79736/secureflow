@@ -4,6 +4,7 @@ spring:
     port: 587
     username: ${EMAIL_USERNAME:testaccount@naver.com}
     password: ${EMAIL_PASSWORD:1234}
+    from: ${EMAIL_FROM:testaccount@naver.com}
     properties:
       mail:
         smtp:
