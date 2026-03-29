@@ -2,10 +2,6 @@ package com.tdd.secureflow.security.oauth2.service;
 
 import static com.tdd.secureflow.domain.support.error.ErrorType.Auth.UNSUPPORTED_OAUTH_PROVIDER;
 import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
-import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.GOOGLE;
-import static com.tdd.secureflow.security.oauth2.OAuth2ServiceProvider.NAVER;
-
-import java.util.Map;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -19,10 +15,10 @@ import com.tdd.secureflow.domain.user.domain.model.UserType;
 import com.tdd.secureflow.domain.user.dto.UserRepositoryParam;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
 import com.tdd.secureflow.global.util.PasswordUtil;
+import com.tdd.secureflow.security.oauth2.attribute.OAuth2AttributeMapper;
+import com.tdd.secureflow.security.oauth2.attribute.OAuth2AttributeMapperRegistry;
 import com.tdd.secureflow.security.oauth2.exception.ExistingUserAuthenticationException;
 import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
-import com.tdd.secureflow.security.oauth2.model.response.GoogleResponse;
-import com.tdd.secureflow.security.oauth2.model.response.NaverResponse;
 import com.tdd.secureflow.security.oauth2.model.response.OAuth2Response;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final OAuth2AttributeMapperRegistry oAuth2AttributeMapperRegistry;
 
-    public CustomOAuth2UserService(UserRepository userRepository) {
+    public CustomOAuth2UserService(UserRepository userRepository, OAuth2AttributeMapperRegistry oAuth2AttributeMapperRegistry) {
         this.userRepository = userRepository;
+        this.oAuth2AttributeMapperRegistry = oAuth2AttributeMapperRegistry;
     }
 
     @Override
@@ -44,18 +42,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("CustomOAuth2UserService > Oauth2User Request: {}", oAuth2User.toString());
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User.getAttributes());      
+        // OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User.getAttributes());      
         
+        // // 지원하지 않는 PROVIDER
+        // if (oAuth2Response == null) {
+        //     throw new CoreException(UNSUPPORTED_OAUTH_PROVIDER);
+        // }
+
+        OAuth2AttributeMapper mapper = oAuth2AttributeMapperRegistry.getOrNull(registrationId);
+
         // 지원하지 않는 PROVIDER
-        if (oAuth2Response == null) {
+        if (mapper == null) {
             throw new CoreException(UNSUPPORTED_OAUTH_PROVIDER);
         }
 
-        //리소스 서버에서 발급 받은 정보로 사용자를 특정할 아이디값을 만듬
+        // OAuth2Response 를 생성한다.
+        OAuth2Response oAuth2Response = mapper.map(oAuth2User.getAttributes());
+
+        // 리소스 서버에서 발급 받은 정보로 사용자를 특정할 아이디값을 만듬 (ex: google 1234567890, naver 1234567890)
         String providerId = createProviderId(oAuth2Response);
+        // 이메일로 기존 사용자 유저를 조회한다.
         User byEmail = userRepository.findByEmailOrNull(oAuth2Response.getEmail());
 
         if (byEmail != null) {
+            // 기존 사용자 유저가 존재하는 경우 처리
             return handleExistingMember(byEmail, oAuth2Response);
         } else {
             // 신규 회원
@@ -129,16 +139,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     /**
      * provider 를 기준으로 OAuth2Response 를 생성한다.
      */
-    private OAuth2Response createOAuth2Response(String registrationId, Map<String, Object> attributes) {
-        switch (registrationId) {
-            case NAVER:
-                return new NaverResponse(attributes);
-            case GOOGLE:
-                return new GoogleResponse(attributes);
-            default:
-                return null;
-        }
-    }
+    // private OAuth2Response createOAuth2Response(String registrationId, Map<String, Object> attributes) {
+    //     switch (registrationId) {
+    //         case NAVER:
+    //             return new NaverResponse(attributes);
+    //         case GOOGLE:
+    //             return new GoogleResponse(attributes);
+    //         default:
+    //             return null;
+    //     }
+    // }
 
     public static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
