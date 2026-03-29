@@ -61,7 +61,7 @@ public class UserCommandService {
         }
 
         if (!password.equals(confirmPassword)) {
-            throw new CoreException(PASSWORD_MUST_NOT_BE_NULL, CoreException.createErrorJson("confirmPassword", CONFIRM_PASSWORD_NOT_MATCHING.getMessage()));
+            throw new CoreException(CONFIRM_PASSWORD_NOT_MATCHING, CoreException.createErrorJson("confirmPassword", CONFIRM_PASSWORD_NOT_MATCHING.getMessage()));
         }
     }
 
