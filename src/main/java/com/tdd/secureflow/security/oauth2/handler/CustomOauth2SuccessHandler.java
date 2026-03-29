@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
@@ -49,13 +50,22 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final RefreshRepository refreshRepository;
     private final UUIDKeyGenerator uuidKeyGenerator;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private final LoginHistoryService loginHistoryService;
 
-    public CustomOauth2SuccessHandler(JwtProvider jwtProvider, UserRepository userRepository, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator, OAuth2AuthorizedClientService oAuth2AuthorizedClientService) {
+    public CustomOauth2SuccessHandler(
+            JwtProvider jwtProvider,
+            UserRepository userRepository,
+            RefreshRepository refreshRepository,
+            UUIDKeyGenerator uuidKeyGenerator,
+            OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
+            LoginHistoryService loginHistoryService
+    ) {
         this.jwtProvider = jwtProvider;
         this.userRepository = userRepository;
         this.refreshRepository = refreshRepository;
         this.uuidKeyGenerator = uuidKeyGenerator;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
+        this.loginHistoryService = loginHistoryService;
     }
 
     @Override
@@ -103,6 +113,9 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
         response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
+
+        // 로그인 이력 저장
+        loginHistoryService.recordSuccessfulLogin(email, request);
 
         // 팝업 창에서 부모 창으로 메시지 전달
         response.setContentType("text/html");

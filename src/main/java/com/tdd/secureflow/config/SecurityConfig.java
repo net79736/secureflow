@@ -25,6 +25,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
 import com.tdd.secureflow.interfaces.WebConfig;
@@ -76,6 +77,7 @@ public class SecurityConfig {
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     private final JwtExceptionFilter jwtExceptionFilter;
     private final UUIDKeyGenerator uuidKeyGenerator;
+    private final LoginHistoryService loginHistoryService;
 
     @PostConstruct
     public void init() {
@@ -151,14 +153,14 @@ public class SecurityConfig {
         // JWT 인증 및 토큰 검증 필터 추가
         http
             .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
-            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository, uuidKeyGenerator), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
+            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository, uuidKeyGenerator, loginHistoryService), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
             .addFilterBefore(new JwtAuthorizationFilter(jwtProvider, refreshRepository), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
 
         // 로그아웃 설정
         http.logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .invalidateHttpSession(true)
-                .logoutSuccessHandler(new CustomLogoutSuccessHandler(jwtProvider, refreshRepository))
+                .logoutSuccessHandler(new CustomLogoutSuccessHandler(jwtProvider, refreshRepository, loginHistoryService))
                 .permitAll()
         );
 

@@ -35,6 +35,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
+import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
@@ -50,17 +51,28 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+    /** 로그인 실패 시 {@link #unsuccessfulAuthentication} 에서 조회 (시도한 아이디). */
+    static final String ATTR_ATTEMPTED_USERNAME = JwtAuthenticationFilter.class.getName() + ".attemptedUsername";
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final RefreshRepository refreshRepository;
     private final UUIDKeyGenerator uuidKeyGenerator;
+    private final LoginHistoryService loginHistoryService;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator) {
+    public JwtAuthenticationFilter(
+            AuthenticationManager authenticationManager,
+            JwtProvider jwtProvider,
+            RefreshRepository refreshRepository,
+            UUIDKeyGenerator uuidKeyGenerator,
+            LoginHistoryService loginHistoryService
+    ) {
         setFilterProcessesUrl("/auth/login");
         this.authenticationManager = authenticationManager;
         this.jwtProvider = jwtProvider;
         this.refreshRepository = refreshRepository;
         this.uuidKeyGenerator = uuidKeyGenerator;
+        this.loginHistoryService = loginHistoryService;
     }
 
     @Override
@@ -74,6 +86,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             String password = credentials.get("password");
 
             log.info("로그인 요청 - username: {}, password: {}", username, password);
+
+            // [로그인 실패 시 시도한 아이디 저장]을 위한 속성 설정
+            request.setAttribute(ATTR_ATTEMPTED_USERNAME, username);
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(username, password);
@@ -143,6 +158,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             response.setStatus(HttpStatus.OK.value());
 
             log.info("자체 서비스 로그인에 성공하였습니다.");
+            loginHistoryService.recordSuccessfulLogin(username, request);
         } catch (InternalAuthenticationServiceException e) {
             log.error("successfulAuthentication 메서드 에러 발생 : {}", e.getMessage());
         }
@@ -174,6 +190,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         // 로그로 실패 메시지 출력
         log.warn("Authentication failed: {}", errorMessage);
+
+        Object attr = request.getAttribute(ATTR_ATTEMPTED_USERNAME); // 로그인 실패 시 시도한 아이디
+        String attemptedUserId = attr != null ? attr.toString() : null; // 로그인 실패 시 시도한 아이디
+        loginHistoryService.recordFailedLogin(attemptedUserId, request); // 로그인 실패 이력 저장
 
         // 401 상태 코드 설정
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
