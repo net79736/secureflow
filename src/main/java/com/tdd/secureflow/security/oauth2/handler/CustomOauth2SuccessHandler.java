@@ -1,18 +1,7 @@
 package com.tdd.secureflow.security.oauth2.handler;
 
-import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
-import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
-import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
-import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
-import static com.tdd.secureflow.interfaces.CommonSecurityScheme.BEARER_SCHEME;
-import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.LOGOUT_PATH;
-import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.TOKEN_REISSUE_PATH;
-import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
-import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
-
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,16 +13,10 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
-import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
-import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
-import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginSuccessCommand;
-import com.tdd.secureflow.domain.user.service.UserCommandService;
-import com.tdd.secureflow.security.jwt.JwtProvider;
+import com.tdd.secureflow.security.login.LoginSessionIssuer;
+import com.tdd.secureflow.security.login.LoginSessionIssuer.IssuedLoginSessionTokens;
 import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 
 import jakarta.servlet.ServletException;
@@ -47,30 +30,18 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     @Value("${FRONT_URL:http://localhost:3000}")
     private String frontUrl;
     private final String frontSignUpPath = "/sign"; // 프론트 회원가입 주소
-    private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
-    private final RefreshRepository refreshRepository;
-    private final UUIDKeyGenerator uuidKeyGenerator;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
-    private final LoginHistoryService loginHistoryService;
-    private final UserCommandService userCommandService;
+    private final LoginSessionIssuer loginSessionIssuer;
 
     public CustomOauth2SuccessHandler(
-            JwtProvider jwtProvider,
             UserRepository userRepository,
-            RefreshRepository refreshRepository,
-            UUIDKeyGenerator uuidKeyGenerator,
             OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
-            LoginHistoryService loginHistoryService,
-            UserCommandService userCommandService
+            LoginSessionIssuer loginSessionIssuer
     ) {
-        this.jwtProvider = jwtProvider;
         this.userRepository = userRepository;
-        this.refreshRepository = refreshRepository;
-        this.uuidKeyGenerator = uuidKeyGenerator;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
-        this.loginHistoryService = loginHistoryService;
-        this.userCommandService = userCommandService;
+        this.loginSessionIssuer = loginSessionIssuer;
     }
 
     @Override
@@ -101,27 +72,8 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         log.info("onAuthenticationSuccess email: {}", user.getEmail());
         log.info("onAuthenticationSuccess role: {}", user.getRole());
 
-        // 리프레시 토큰 아이디 생성
-        String refreshTokenId = uuidKeyGenerator.generate();
-
-        // Authorization
-        String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, jwtProvider.getAccessTokenExpiration(), user.getEmail(), role, refreshTokenId);
-        String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), user.getEmail(), role, refreshTokenId);
-
-        // 기존 리프레시 토큰 삭제
-        refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(user.getEmail()));
-        // 새로운 리프레시 토큰 등록
-        Date expiration = new Date(System.currentTimeMillis() + jwtProvider.getRefreshTokenExpiration().toMillis());
-        refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(user.getEmail(), refreshToken, refreshTokenId, expiration));
-
-        response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
-
-        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-        response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-
-        // 로그인 이력 저장
-        loginHistoryService.recordSuccessfulLogin(email, request);
-        userCommandService.recordLoginSuccess(new RecordLoginSuccessCommand(email));
+        IssuedLoginSessionTokens issued = loginSessionIssuer.issue(request, response, user.getEmail(), role);
+        String accessToken = issued.accessToken();
 
         // 팝업 창에서 부모 창으로 메시지 전달
         response.setContentType("text/html");

@@ -24,7 +24,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
 import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
@@ -37,6 +36,7 @@ import com.tdd.secureflow.security.handler.CustomAccessDeniedHandler;
 import com.tdd.secureflow.security.handler.CustomLogoutSuccessHandler;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import com.tdd.secureflow.security.jwt.exception.JwtExceptionFilter;
+import com.tdd.secureflow.security.login.LoginSessionIssuer;
 import com.tdd.secureflow.security.oauth2.handler.CustomOauth2SuccessHandler;
 import com.tdd.secureflow.security.oauth2.handler.OAuth2LoginFailureHandler;
 import com.tdd.secureflow.security.oauth2.service.CustomOAuth2UserService;
@@ -77,7 +77,7 @@ public class SecurityConfig {
     private final CustomOauth2SuccessHandler customOauth2SuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     private final JwtExceptionFilter jwtExceptionFilter;
-    private final UUIDKeyGenerator uuidKeyGenerator;
+    private final LoginSessionIssuer loginSessionIssuer;
     private final LoginHistoryService loginHistoryService;
     private final UserCommandService userCommandService;
 
@@ -149,7 +149,7 @@ public class SecurityConfig {
         // JWT 인증 및 토큰 검증 필터 추가
         http
             .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
-            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager, jwtProvider, refreshRepository, uuidKeyGenerator, loginHistoryService, userCommandService), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
+            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager, loginSessionIssuer, loginHistoryService, userCommandService), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
             .addFilterBefore(new JwtAuthorizationFilter(jwtProvider, refreshRepository), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
 
         // 로그아웃 설정
