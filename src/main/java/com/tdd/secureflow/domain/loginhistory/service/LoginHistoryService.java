@@ -33,11 +33,18 @@ public class LoginHistoryService {
         if (userId == null) {
             return;
         }
+        Instant now = Instant.now();
+        // 이전에 로그아웃 없이 남아 있던 미종료 성공 세션은 이번 로그인 시각으로 종료 처리
+        int closed = userLoginHistoryRepository.closeOpenSuccessSessions(userId, now);
+        if (closed > 0) {
+            log.debug("재로그인으로 이전 미종료 세션 {}건 종료 처리: userId={}", closed, userId);
+        }
+
         String ua = request != null ? request.getHeader("User-Agent") : null;
         UserLoginHistory row = UserLoginHistory.builder()
                 .userId(userId) // 로그인 아이디
                 .loginIp(HttpClientInfoExtractor.clientIp(request)) // 로그인 IP
-                .loginDttm(Instant.now()) // 로그인 시각
+                .loginDttm(now) // 로그인 시각
                 .finalDttm(null) // 세션 종료 시각
                 .loginBrowser(HttpClientInfoExtractor.browserSummary(ua)) // 로그인 브라우저
                 .browserVersion(HttpClientInfoExtractor.browserVersionSummary(ua)) // 로그인 브라우저 버전
