@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
+import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.model.Refresh;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
@@ -28,10 +29,16 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
     final JwtProvider jwtProvider;
     final RefreshRepository refreshRepository;
+    final LoginHistoryService loginHistoryService;
 
-    public CustomLogoutSuccessHandler(JwtProvider jwtProvider, RefreshRepository refreshRepository) {
+    public CustomLogoutSuccessHandler(
+            JwtProvider jwtProvider,
+            RefreshRepository refreshRepository,
+            LoginHistoryService loginHistoryService
+    ) {
         this.jwtProvider = jwtProvider;
         this.refreshRepository = refreshRepository;
+        this.loginHistoryService = loginHistoryService;
     }
 
     @Override
@@ -67,7 +74,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
     private void handleRefreshToken(String refreshTokenId, HttpServletResponse response) {
         try {
             // refreshTokenId로 DB에서 실제 refreshToken 조회
-            Refresh refreshEntity = refreshRepository.findByRefreshTokenId(refreshTokenId);
+            Refresh refreshEntity = refreshRepository.findByRefreshTokenIdAndRevokedFalse(refreshTokenId);
             if (refreshEntity == null) {
                 logger.warn("Refresh token not found for ID: {}", refreshTokenId);
                 return;
@@ -76,7 +83,8 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
             String refreshToken = refreshEntity.getRefresh();
             String email = jwtProvider.getEmail(refreshToken);
 
-            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
+            loginHistoryService.closeLatestOpenSession(email); // 가장 최근의 미종료 성공 세션에 종료 시각을 기록합니다.
+            refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(email));
             logger.info("리프레시 토큰 삭제 완료");
 
         } catch (Exception e) {

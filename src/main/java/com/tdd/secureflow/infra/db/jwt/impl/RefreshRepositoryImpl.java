@@ -1,5 +1,7 @@
 package com.tdd.secureflow.infra.db.jwt.impl;
 
+import java.time.Instant;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +21,9 @@ public class RefreshRepositoryImpl implements RefreshRepository {
     private final RefreshJpaRepository refreshJpaRepository;
 
     @Override
-    public Boolean existsRefresh(ExistsRefreshByEmailParam param) {
-        return refreshJpaRepository.existsByEmail(param.email());
+    public Boolean existsByEmailAndRevokedFalse(ExistsRefreshByEmailParam param) {
+        // 해당 이메일의 아직 무효화되지 않은 리프레시 행이 존재하는지 확인
+        return refreshJpaRepository.existsByEmailAndRevokedFalse(param.email());
     }
 
     @Override
@@ -38,13 +41,22 @@ public class RefreshRepositoryImpl implements RefreshRepository {
 
     @Override
     @Transactional
-    public void deleteRefresh(DeleteRefreshByEmailParam param) {
-        refreshJpaRepository.deleteByEmail(param.email());
+    public void revokeByEmail(DeleteRefreshByEmailParam param) {
+        // 해당 이메일의 아직 무효화되지 않은 리프레시 행을 소프트 삭제(무효화)
+        refreshJpaRepository.revokeByEmail(param.email(), Instant.now());
     }
 
     @Override
-    public Refresh findByRefreshTokenId(String refreshTokenId) {
-        return refreshJpaRepository.findByRefreshTokenId(refreshTokenId);
+    public Refresh findByRefreshTokenIdAndRevokedFalse(String refreshTokenId) {
+        // 해당 refreshTokenId의 아직 무효화되지 않은 리프레시 행을 조회
+        return refreshJpaRepository.findByRefreshTokenIdAndRevokedFalse(refreshTokenId);
+    }
+
+    @Override
+    @Transactional
+    public long deleteExpiredBefore(Instant cutoff) {
+        // 만료 시각이 cutoff보다 이전인 행을 물리 삭제
+        return refreshJpaRepository.deleteByExpirationBefore(cutoff);
     }
 
 }

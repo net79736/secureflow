@@ -1,45 +1,27 @@
 package com.tdd.secureflow.security.filter;
 
-import static com.tdd.secureflow.global.util.CookieUtil.createCookie;
-import static com.tdd.secureflow.global.util.DomainUtil.extractDomain;
-import static com.tdd.secureflow.interfaces.CommonCookieKey.REFRESH_TOKEN_KEY;
-import static com.tdd.secureflow.interfaces.CommonHttpHeader.HEADER_AUTHORIZATION;
-import static com.tdd.secureflow.interfaces.CommonSecurityScheme.BEARER_SCHEME;
-import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.LOGOUT_PATH;
-import static com.tdd.secureflow.interfaces.api.controller.impl.ReIssueControllerImpl.TOKEN_REISSUE_PATH;
-import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_ACCESS;
-import static com.tdd.secureflow.security.jwt.model.JwtCategory.TOKEN_CATEGORY_REFRESH;
-
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
-import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
-import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginFailureCommand;
+import com.tdd.secureflow.domain.user.service.UserCommandService;
+import com.tdd.secureflow.security.auth.LoginFailureMessage;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
-import com.tdd.secureflow.security.jwt.JwtProvider;
+import com.tdd.secureflow.security.login.LoginSessionIssuer;
+import com.tdd.secureflow.security.login.LoginSessionIssuer.IssuedLoginSessionTokens;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -50,17 +32,25 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    private final AuthenticationManager authenticationManager;
-    private final JwtProvider jwtProvider;
-    private final RefreshRepository refreshRepository;
-    private final UUIDKeyGenerator uuidKeyGenerator;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, RefreshRepository refreshRepository, UUIDKeyGenerator uuidKeyGenerator) {
+    /** 로그인 실패 시 {@link #unsuccessfulAuthentication} 에서 조회 (시도한 아이디). */
+    static final String ATTR_ATTEMPTED_USERNAME = JwtAuthenticationFilter.class.getName() + ".attemptedUsername";
+    private final AuthenticationManager authenticationManager;
+    private final LoginSessionIssuer loginSessionIssuer;
+    private final LoginHistoryService loginHistoryService;
+    private final UserCommandService userCommandService;
+
+    public JwtAuthenticationFilter(
+            AuthenticationManager authenticationManager,
+            LoginSessionIssuer loginSessionIssuer,
+            LoginHistoryService loginHistoryService,
+            UserCommandService userCommandService
+    ) {
         setFilterProcessesUrl("/auth/login");
         this.authenticationManager = authenticationManager;
-        this.jwtProvider = jwtProvider;
-        this.refreshRepository = refreshRepository;
-        this.uuidKeyGenerator = uuidKeyGenerator;
+        this.loginSessionIssuer = loginSessionIssuer;
+        this.loginHistoryService = loginHistoryService;
+        this.userCommandService = userCommandService;
     }
 
     @Override
@@ -75,6 +65,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             log.info("로그인 요청 - username: {}, password: {}", username, password);
 
+            // [로그인 실패 시 시도한 아이디 저장]을 위한 속성 설정
+            request.setAttribute(ATTR_ATTEMPTED_USERNAME, username);
+
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(username, password);
 
@@ -88,11 +81,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         try {
-            // UserDetails
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-
             String username = customUserDetails.getUsername();
-
             log.info("successfulAuthentication > username : {}", username);
 
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
@@ -102,43 +92,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             // 권한 획득
             String role = auth.getAuthority();
 
-			// 리프레시 토큰 아이디 생성
-			String refreshTokenId = uuidKeyGenerator.generate();
-            customUserDetails.getUser().setRefreshTokenId(refreshTokenId); // TODO: 리팩토링 고려 author: jongwook
+            IssuedLoginSessionTokens issued = loginSessionIssuer.issue(request, response, username, role);
+            customUserDetails.getUser().setRefreshTokenId(issued.refreshTokenId()); // TODO: 리팩토링 고려 필요 author jongwook
 
-            // Authorization
-            String accessToken = jwtProvider.generateToken(TOKEN_CATEGORY_ACCESS, jwtProvider.getAccessTokenExpiration(), username, role, refreshTokenId);
-            String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), username, role, refreshTokenId);
-
-            // 기존 리프레시 토큰 삭제
-            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(username));
-
-            // 새로운 리프레시 토큰 등록
-            Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());
-            refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(username, refreshToken, refreshTokenId, expiration));
-
-            response.addHeader(HEADER_AUTHORIZATION, String.format("%s %s", BEARER_SCHEME, accessToken));
-
-            /**
-             * 쿠키 생성 및 저장되는 과정 설명:
-             * 1. /api/auth/login API 실행 시 response.addCookie()를 통해 응답 헤더에 Set-Cookie 가 설정된다.
-             * 2. 클라이언트(브라우저)가 해당 응답을 수신해야 쿠키가 실제로 브라우저에 저장된다.
-             * 3. 저장된 쿠키는 쿠키의 path와 일치하는 요청이 있을 때 자동으로 전송된다.
-             *    (예: TOKEN_REISSUE_PATH, LOGOUT_PATH에 접근 시 자동 포함됨)
-             * 4. 단, path가 "/reissue"로 설정된 쿠키는 "/reissue" 또는 그 하위 경로에만 전송되며, 다른 경로에서는 보이지 않는다.
-             *
-             * 🔍 이슈) 브라우저 개발자 도구에서 Application > Cookies 보려면:
-             * 해당 경로로 실제 요청(fetch, axios, 브라우저 주소창 등)이 한 번 이상 발생해야 그 경로 기준의 쿠키가 그 탭에서 노출됨.
-             *
-             * ⚠️ 프론트엔드(CORS 환경) 주의사항:
-             * - 서버에서 쿠키를 보내더라도, 클라이언트가 withCredentials: true 설정을 하지 않으면 쿠키가 저장되지 않음.
-             * - 예: axios.defaults.withCredentials = true;
-             * - 서버에서도 응답 헤더에 Access-Control-Allow-Credentials: true 가 설정되어야 함.
-             */
-            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, TOKEN_REISSUE_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-            response.addCookie(createCookie(REFRESH_TOKEN_KEY, refreshTokenId, LOGOUT_PATH, 24 * 60 * 60, true, extractDomain(request.getServerName())));
-
-            log.debug("print accessToken: {}", accessToken);
+            log.debug("print accessToken: {}", issued.accessToken());
             log.debug("print role: {}", role);
             response.setStatus(HttpStatus.OK.value());
 
@@ -152,24 +109,20 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
             throws IOException, ServletException {
 
-        String errorMessage;
+        LoginFailureMessage kind = LoginFailureMessage.from(failed);
+        String errorMessage = kind.getDefaultMessage(); // 로그인 실패 메시지
 
-        // 예외 유형에 따라 적절한 메시지 설정
-        if (failed instanceof UsernameNotFoundException) {
-            errorMessage = !StringUtils.isEmpty(failed.getMessage()) ? failed.getMessage() : "존재하지 않는 계정입니다.";
-        } else if (failed instanceof BadCredentialsException) {
-            errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";
-        } else if (failed instanceof DisabledException) {
-            errorMessage = "비활성화된 계정입니다. 관리자에게 문의하세요.";
-        } else if (failed instanceof LockedException) {
-            errorMessage = "계정이 잠겨 있습니다. 관리자에게 문의하세요.";
-        } else if (failed instanceof CredentialsExpiredException) {
-            errorMessage = "비밀번호 유효 기간이 만료되었습니다. 비밀번호를 재설정하세요.";
-        } else if (failed instanceof AccountExpiredException) {
-            errorMessage = "계정 유효 기간이 만료되었습니다.";
-        } else {
-            // 기타 알 수 없는 에러
-            errorMessage = "로그인에 실패했습니다. 다시 시도해주세요.";
+        // 로그인 실패 시 시도한 아이디
+        String attemptedUserId = getAttemptedUserId(request);
+
+        if (kind.isRecordFailureCnt()) {
+            // 로그인 실패 시 실패 횟수 증가
+            userCommandService.recordLoginFailure(new RecordLoginFailureCommand(attemptedUserId));
+        }
+
+        // 실패 이력 남기기 여부에 따라 로그인 실패 이력 저장. 존재하지 않는 아이디(UsernameNotFound)는 이력에 남기지 않음
+        if (kind.isRecordFailureHistory()) {
+            recordFailedLoginAttempt(request, attemptedUserId); // 로그인 실패 이력 저장
         }
 
         // 로그로 실패 메시지 출력
@@ -183,4 +136,22 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.getWriter().write(new ObjectMapper().writeValueAsString(Map.of("error", errorMessage)));
     }
 
+    /**
+     * 로그인 실패 시 시도한 아이디로 로그인 실패 이력을 남깁니다.
+     * @param request 요청
+     * @param attemptedUserId 로그인 실패 시 시도한 아이디
+     */
+    private void recordFailedLoginAttempt(HttpServletRequest request, String attemptedUserId) {
+        loginHistoryService.recordFailedLogin(attemptedUserId, request); // 로그인 실패 이력 저장
+    }
+
+    /**
+     * 로그인 실패 시 시도한 아이디 조회
+     * @param request
+     * @return 로그인 실패 시 시도한 아이디
+     */
+    private String getAttemptedUserId(HttpServletRequest request) {
+        Object attr = request.getAttribute(ATTR_ATTEMPTED_USERNAME);
+        return attr != null ? attr.toString() : null;
+    }
 }

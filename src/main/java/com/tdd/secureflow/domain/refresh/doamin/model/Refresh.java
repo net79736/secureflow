@@ -24,7 +24,14 @@ public class Refresh extends BaseEntity {
     @Column(nullable = false, columnDefinition = "BLOB")
     private String refreshTokenId;
     @Column(nullable = false)
-    private Instant expiration;
+    private Instant expiration; // 토큰의 정상 만료 시각
+
+    // {@code true}면 로그아웃·재로그인 등으로 무효화됨. 행은 이력/감사용으로 유지.
+    @Column(nullable = false)
+    private boolean revoked;
+
+    // 토큰을 무효화한 시각. {@code revoked == false}이면 null
+    private Instant revokedAt;
 
     @Builder
     public Refresh(String email, String refresh, String refreshTokenId, Instant expiration) {
@@ -32,5 +39,7 @@ public class Refresh extends BaseEntity {
         this.refresh = refresh;
         this.refreshTokenId = refreshTokenId;
         this.expiration = expiration;
+        this.revoked = false;
+        this.revokedAt = null;
     }
 }

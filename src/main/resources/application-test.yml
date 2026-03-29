@@ -26,3 +26,8 @@ logging:
   level:
     org.hibernate.SQL: DEBUG  # 실행되는 SQL 로그 출력
     org.hibernate.orm.jdbc.bind: TRACE  # SQL 바인딩된 파라미터 값 출력
+
+# 테스트에서는 스케줄된 리프레시 토큰 정리 비활성화 (불필요한 삭제·로그 방지)
+secureflow:
+  refresh-token-cleanup:
+    enabled: false

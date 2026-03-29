@@ -3,6 +3,8 @@ package com.tdd.secureflow.domain.user.domain.model;
 import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
 import static com.tdd.secureflow.domain.user.domain.model.UserType.LOCAL;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,6 +46,12 @@ public class User {
 //    @Column(nickname = "status", nullable = false)
 //    private MemberStatus status = PENDING;
 
+    @Column(name = "last_login_dttm")
+    private LocalDateTime lastLoginDttm; // 마지막 로그인 시각
+
+    @Column(name = "login_fail_cnt")
+    private Integer loginFailCnt; // 로그인 실패 횟수
+
     @Builder
     public User(String email, String password, String name, UserRole role, UserType type) {
         this.email = email;
@@ -62,5 +70,17 @@ public class User {
 
     public void setRefreshTokenId(String refreshTokenId) {
         this.refreshTokenId = refreshTokenId;
+    }
+
+    /** 로그인 성공 시 마지막 로그인 시각 갱신 및 실패 횟수 초기화 */
+    public void recordLoginSuccess() {
+        this.lastLoginDttm = LocalDateTime.now();
+        this.loginFailCnt = 0;
+    }
+
+    /** 로그인 실패 반영 */
+    public void incrementLoginFailureCount() {
+        int base = this.loginFailCnt == null ? 0 : this.loginFailCnt;
+        this.loginFailCnt = base + 1;
     }
 }
