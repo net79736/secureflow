@@ -69,14 +69,19 @@ public class ReIssueCommandService {
             throw new CoreException(INVALID_TOKEN_TYPE);
         }
 
-        //DB에 저장되어 있는지 확인
-        Boolean isExist = refreshRepository.existsRefresh(new ExistsRefreshByEmailParam(email));
+        // DB에 저장되어 있는지 확인
+        Boolean isExist = refreshRepository.existsByEmailAndRevokedFalse(new ExistsRefreshByEmailParam(email));
         if (!isExist) {
             log.info("기존의 리프레시 토큰이 존재하지 않음");
             throw new CoreException(REFRESH_TOKEN_NOT_FOUND);
         }
     }
 
+    /**
+     * 리프레시 토큰 재발급
+     * @param request
+     * @return Tokens
+     */
     public Tokens reissueTokens(HttpServletRequest request) {
         try {
             // Refresh Token ID 추출
@@ -84,7 +89,7 @@ public class ReIssueCommandService {
             log.info("Extracted refresh token ID: {}", refreshTokenId);
 
             // Refresh Token ID로 DB에서 실제 Refresh Token 조회
-            Refresh refreshEntity = refreshRepository.findByRefreshTokenId(refreshTokenId);
+            Refresh refreshEntity = refreshRepository.findByRefreshTokenIdAndRevokedFalse(refreshTokenId);
             if (refreshEntity == null) {
                 log.error("Refresh token not found for ID: {}", refreshTokenId);
                 throw new CoreException(REFRESH_TOKEN_NOT_FOUND);
@@ -108,8 +113,8 @@ public class ReIssueCommandService {
             // 리프레시 토큰의 남은 유효시간 체크
             boolean shouldRenewRefreshToken = shouldRenewRefreshToken(refresh);
             
-            String newRefresh;
-            Date expiration;
+            String newRefresh; // 새로운 리프레시 토큰
+            Date expiration; // 새로운 리프레시 토큰의 만료 시간
             
             if (shouldRenewRefreshToken) {
                 // 리프레시 토큰이 임계값 이하로 남았을 때만 재발급
@@ -118,7 +123,7 @@ public class ReIssueCommandService {
                 expiration = new Date(System.currentTimeMillis() + jwtProvider.getRefreshTokenExpiration().toMillis());
                 
                 // 기존 리프레시 토큰 삭제 후 새로운 리프레시 토큰 등록
-                refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
+                refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(email));
                 refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(email, newRefresh, refreshTokenId, expiration));
             } else {
                 // 리프레시 토큰은 그대로 유지

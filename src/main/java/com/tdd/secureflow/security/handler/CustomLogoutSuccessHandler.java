@@ -67,7 +67,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
     private void handleRefreshToken(String refreshTokenId, HttpServletResponse response) {
         try {
             // refreshTokenId로 DB에서 실제 refreshToken 조회
-            Refresh refreshEntity = refreshRepository.findByRefreshTokenId(refreshTokenId);
+            Refresh refreshEntity = refreshRepository.findByRefreshTokenIdAndRevokedFalse(refreshTokenId);
             if (refreshEntity == null) {
                 logger.warn("Refresh token not found for ID: {}", refreshTokenId);
                 return;
@@ -76,7 +76,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
             String refreshToken = refreshEntity.getRefresh();
             String email = jwtProvider.getEmail(refreshToken);
 
-            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(email));
+            refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(email));
             logger.info("리프레시 토큰 삭제 완료");
 
         } catch (Exception e) {

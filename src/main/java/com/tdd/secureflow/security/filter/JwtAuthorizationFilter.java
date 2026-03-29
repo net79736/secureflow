@@ -91,7 +91,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             // TODO: 중복 로그인 로직 disabled 처리함 author jongwook
             try {
                 // 리프레시 토큰 아이디로 리프레시 토큰 조회
-                Refresh refresh = refreshRepository.findByRefreshTokenId(refreshTokenId);
+                Refresh refresh = refreshRepository.findByRefreshTokenIdAndRevokedFalse(refreshTokenId);
                 // 값이 없으면 다른 기기에서 로그인하여 토큰이 만료된 것으로 처리
                 if (refresh == null || refresh.getRefreshTokenId() == null) {
                     log.warn("유효하지 않은 토큰 - refreshTokenId: {}", refreshTokenId);

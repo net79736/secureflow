@@ -7,3 +7,10 @@ spring:
 
 server:
   port: 8082
+
+# 만료된 리프레시 토큰 DB 배치 정리 (로그아웃/재발급과 별개로, 만료 후 남은 행 제거)
+secureflow:
+  refresh-token-cleanup:
+    enabled: true
+    # 초 분 시 일 월 요일 — 3분 마다 정리
+    cron: "0 0/3 * * * *"

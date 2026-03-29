@@ -111,7 +111,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), username, role, refreshTokenId);
 
             // 기존 리프레시 토큰 삭제
-            refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(username));
+            refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(username));
 
             // 새로운 리프레시 토큰 등록
             Date expiration = new Date(System.currentTimeMillis() + Duration.ofHours(24).toMillis());

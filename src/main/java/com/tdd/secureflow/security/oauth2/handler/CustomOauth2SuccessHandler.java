@@ -94,7 +94,7 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         String refreshToken = jwtProvider.generateToken(TOKEN_CATEGORY_REFRESH, jwtProvider.getRefreshTokenExpiration(), user.getEmail(), role, refreshTokenId);
 
         // 기존 리프레시 토큰 삭제
-        refreshRepository.deleteRefresh(new DeleteRefreshByEmailParam(user.getEmail()));
+        refreshRepository.revokeByEmail(new DeleteRefreshByEmailParam(user.getEmail()));
         // 새로운 리프레시 토큰 등록
         Date expiration = new Date(System.currentTimeMillis() + jwtProvider.getRefreshTokenExpiration().toMillis());
         refreshRepository.createRefresh(new CreateRefreshByEmailAndRefreshAndExpirationParam(user.getEmail(), refreshToken, refreshTokenId, expiration));
