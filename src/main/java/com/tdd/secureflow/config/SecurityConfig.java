@@ -16,7 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
@@ -28,6 +28,7 @@ import com.tdd.secureflow.domain.common.util.UUIDKeyGenerator;
 import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.UserRole;
+import com.tdd.secureflow.domain.user.service.UserCommandService;
 import com.tdd.secureflow.interfaces.WebConfig;
 import com.tdd.secureflow.security.filter.JwtAuthenticationFilter;
 import com.tdd.secureflow.security.filter.JwtAuthorizationFilter;
@@ -78,17 +79,12 @@ public class SecurityConfig {
     private final JwtExceptionFilter jwtExceptionFilter;
     private final UUIDKeyGenerator uuidKeyGenerator;
     private final LoginHistoryService loginHistoryService;
+    private final UserCommandService userCommandService;
 
     @PostConstruct
     public void init() {
         log.debug("init security config");
         log.debug("frontUrl = {}", frontUrl);
-    }
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        log.debug("BCryptPasswordEncoder 빈 등록됨");
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -100,7 +96,7 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
         // HTTP 헤더 설정
         http.headers(headers -> headers
                 .httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable) // HSTS 비활성화
@@ -153,7 +149,7 @@ public class SecurityConfig {
         // JWT 인증 및 토큰 검증 필터 추가
         http
             .addFilterBefore(jwtExceptionFilter, SecurityContextHolderFilter.class) // JWT 예외 필터를 가장 먼저 실행
-            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, refreshRepository, uuidKeyGenerator, loginHistoryService), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
+            .addFilterBefore(new JwtAuthenticationFilter(authenticationManager, jwtProvider, refreshRepository, uuidKeyGenerator, loginHistoryService, userCommandService), UsernamePasswordAuthenticationFilter.class) // 로그인 필터 (아이디/비밀번호 검증)
             .addFilterBefore(new JwtAuthorizationFilter(jwtProvider, refreshRepository), JwtAuthenticationFilter.class); // JWT 토큰 인증 필터
 
         // 로그아웃 설정
@@ -183,9 +179,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
+    public AuthenticationManager authenticationManager(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setPasswordEncoder(passwordEncoder);
         provider.setUserDetailsService(customUserDetailsService);
         // 로그인 실패 이유를 구체적으로 구분하고 싶을 때 사용하는 설정
         provider.setHideUserNotFoundExceptions(false);  // 예외 숨김 해제 (별도 Exception 으로 처리하기)

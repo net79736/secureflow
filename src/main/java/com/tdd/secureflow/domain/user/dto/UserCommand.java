@@ -11,4 +11,10 @@ public class UserCommand {
 
     }
 
+    public record RecordLoginSuccessCommand(String email) {
+    }
+
+    public record RecordLoginFailureCommand(String email) {
+    }
+
 }

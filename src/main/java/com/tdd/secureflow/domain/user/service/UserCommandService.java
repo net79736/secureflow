@@ -1,20 +1,26 @@
 package com.tdd.secureflow.domain.user.service;
 
-import com.tdd.secureflow.domain.support.error.CoreException;
-import com.tdd.secureflow.domain.user.domain.model.User;
-import com.tdd.secureflow.domain.user.dto.UserCommand.CreateUserCommand;
-import com.tdd.secureflow.domain.user.dto.UserRepositoryParam.CreateUserParam;
-import com.tdd.secureflow.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.tdd.secureflow.domain.support.error.CoreException.createErrorJson;
+import static com.tdd.secureflow.domain.support.error.ErrorType.User.ACCOUNT_ALREADY_EXISTS;
+import static com.tdd.secureflow.domain.support.error.ErrorType.User.CONFIRM_PASSWORD_NOT_MATCHING;
+import static com.tdd.secureflow.domain.support.error.ErrorType.User.PASSWORD_MUST_NOT_BE_NULL;
+import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
+import static com.tdd.secureflow.domain.user.domain.model.UserType.LOCAL;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.tdd.secureflow.domain.support.error.CoreException.createErrorJson;
-import static com.tdd.secureflow.domain.support.error.ErrorType.User.*;
-import static com.tdd.secureflow.domain.user.domain.model.UserRole.USER;
-import static com.tdd.secureflow.domain.user.domain.model.UserType.LOCAL;
+import com.tdd.secureflow.domain.support.error.CoreException;
+import com.tdd.secureflow.domain.user.domain.model.User;
+import com.tdd.secureflow.domain.user.dto.UserCommand.CreateUserCommand;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginFailureCommand;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginSuccessCommand;
+import com.tdd.secureflow.domain.user.dto.UserRepositoryParam.CreateUserParam;
+import com.tdd.secureflow.domain.user.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -57,5 +63,39 @@ public class UserCommandService {
         if (!password.equals(confirmPassword)) {
             throw new CoreException(PASSWORD_MUST_NOT_BE_NULL, CoreException.createErrorJson("confirmPassword", CONFIRM_PASSWORD_NOT_MATCHING.getMessage()));
         }
+    }
+
+    /**
+     * 로그인 성공 시 마지막 로그인 시각 갱신 및 실패 횟수 초기화
+     * @param command
+     */
+    public void recordLoginSuccess(RecordLoginSuccessCommand command) {
+        String email = command.email();
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        User user = userRepository.findByEmailOrNull(email);
+        if (user == null) {
+            return;
+        }
+        user.recordLoginSuccess();
+        userRepository.save(user);
+    }
+
+    /**
+     * 로그인 실패 시 실패 횟수 증가
+     * @param command
+     */
+    public void recordLoginFailure(RecordLoginFailureCommand command) {
+        String email = command.email();
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        User user = userRepository.findByEmailOrNull(email);
+        if (user == null) {
+            return;
+        }
+        user.incrementLoginFailureCount();
+        userRepository.save(user);
     }
 }

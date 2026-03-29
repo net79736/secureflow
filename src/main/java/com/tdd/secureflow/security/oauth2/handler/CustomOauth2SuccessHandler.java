@@ -31,6 +31,8 @@ import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.Delet
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
 import com.tdd.secureflow.domain.user.domain.model.User;
 import com.tdd.secureflow.domain.user.repository.UserRepository;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginSuccessCommand;
+import com.tdd.secureflow.domain.user.service.UserCommandService;
 import com.tdd.secureflow.security.jwt.JwtProvider;
 import com.tdd.secureflow.security.oauth2.model.CustomOAuth2User;
 
@@ -51,6 +53,7 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final UUIDKeyGenerator uuidKeyGenerator;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
     private final LoginHistoryService loginHistoryService;
+    private final UserCommandService userCommandService;
 
     public CustomOauth2SuccessHandler(
             JwtProvider jwtProvider,
@@ -58,7 +61,8 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
             RefreshRepository refreshRepository,
             UUIDKeyGenerator uuidKeyGenerator,
             OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
-            LoginHistoryService loginHistoryService
+            LoginHistoryService loginHistoryService,
+            UserCommandService userCommandService
     ) {
         this.jwtProvider = jwtProvider;
         this.userRepository = userRepository;
@@ -66,6 +70,7 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         this.uuidKeyGenerator = uuidKeyGenerator;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
         this.loginHistoryService = loginHistoryService;
+        this.userCommandService = userCommandService;
     }
 
     @Override
@@ -116,6 +121,7 @@ public class CustomOauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         // 로그인 이력 저장
         loginHistoryService.recordSuccessfulLogin(email, request);
+        userCommandService.recordLoginSuccess(new RecordLoginSuccessCommand(email));
 
         // 팝업 창에서 부모 창으로 메시지 전달
         response.setContentType("text/html");

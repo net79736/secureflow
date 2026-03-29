@@ -32,6 +32,9 @@ import com.tdd.secureflow.domain.loginhistory.service.LoginHistoryService;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.CreateRefreshByEmailAndRefreshAndExpirationParam;
 import com.tdd.secureflow.domain.refresh.doamin.dto.RefreshRepositoryParam.DeleteRefreshByEmailParam;
 import com.tdd.secureflow.domain.refresh.doamin.repository.RefreshRepository;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginFailureCommand;
+import com.tdd.secureflow.domain.user.dto.UserCommand.RecordLoginSuccessCommand;
+import com.tdd.secureflow.domain.user.service.UserCommandService;
 import com.tdd.secureflow.security.auth.LoginFailureMessage;
 import com.tdd.secureflow.security.dto.CustomUserDetails;
 import com.tdd.secureflow.security.jwt.JwtProvider;
@@ -53,13 +56,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final RefreshRepository refreshRepository;
     private final UUIDKeyGenerator uuidKeyGenerator;
     private final LoginHistoryService loginHistoryService;
+    private final UserCommandService userCommandService;
 
     public JwtAuthenticationFilter(
             AuthenticationManager authenticationManager,
             JwtProvider jwtProvider,
             RefreshRepository refreshRepository,
             UUIDKeyGenerator uuidKeyGenerator,
-            LoginHistoryService loginHistoryService
+            LoginHistoryService loginHistoryService,
+            UserCommandService userCommandService
     ) {
         setFilterProcessesUrl("/auth/login");
         this.authenticationManager = authenticationManager;
@@ -67,6 +72,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         this.refreshRepository = refreshRepository;
         this.uuidKeyGenerator = uuidKeyGenerator;
         this.loginHistoryService = loginHistoryService;
+        this.userCommandService = userCommandService;
     }
 
     @Override
@@ -153,6 +159,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             log.info("자체 서비스 로그인에 성공하였습니다.");
             loginHistoryService.recordSuccessfulLogin(username, request);
+            userCommandService.recordLoginSuccess(new RecordLoginSuccessCommand(username));
         } catch (InternalAuthenticationServiceException e) {
             log.error("successfulAuthentication 메서드 에러 발생 : {}", e.getMessage());
         }
@@ -165,9 +172,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         LoginFailureMessage kind = LoginFailureMessage.from(failed);
         String errorMessage = kind.getDefaultMessage(); // 로그인 실패 메시지
 
+        // 로그인 실패 시 시도한 아이디
+        String attemptedUserId = getAttemptedUserId(request);
+
+        if (kind.isRecordFailureCnt()) {
+            // 로그인 실패 시 실패 횟수 증가
+            userCommandService.recordLoginFailure(new RecordLoginFailureCommand(attemptedUserId));
+        }
+
         // 실패 이력 남기기 여부에 따라 로그인 실패 이력 저장. 존재하지 않는 아이디(UsernameNotFound)는 이력에 남기지 않음
         if (kind.isRecordFailureHistory()) {
-            recordFailedLoginAttempt(request); // 로그인 실패 이력 저장
+            recordFailedLoginAttempt(request, attemptedUserId); // 로그인 실패 이력 저장
         }
 
         // 로그로 실패 메시지 출력
@@ -184,11 +199,19 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     /**
      * 로그인 실패 시 시도한 아이디로 로그인 실패 이력을 남깁니다.
      * @param request 요청
+     * @param attemptedUserId 로그인 실패 시 시도한 아이디
      */
-    private void recordFailedLoginAttempt(HttpServletRequest request) {
-        Object attr = request.getAttribute(ATTR_ATTEMPTED_USERNAME); // 로그인 실패 시 시도한 아이디
-        String attemptedUserId = attr != null ? attr.toString() : null; // 로그인 실패 시 시도한 아이디
+    private void recordFailedLoginAttempt(HttpServletRequest request, String attemptedUserId) {
         loginHistoryService.recordFailedLogin(attemptedUserId, request); // 로그인 실패 이력 저장
     }
 
+    /**
+     * 로그인 실패 시 시도한 아이디 조회
+     * @param request
+     * @return 로그인 실패 시 시도한 아이디
+     */
+    private String getAttemptedUserId(HttpServletRequest request) {
+        Object attr = request.getAttribute(ATTR_ATTEMPTED_USERNAME);
+        return attr != null ? attr.toString() : null;
+    }
 }
