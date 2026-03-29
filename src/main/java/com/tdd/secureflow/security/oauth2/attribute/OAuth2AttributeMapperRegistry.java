@@ -18,7 +18,7 @@ public class OAuth2AttributeMapperRegistry {
     /**
      * 생성자
      * 주입받은 OAuth2AttributeMapper 목록을 Map으로 변환하여 초기화합니다.
-     * @param mappers
+     * @param mappers Spring에 의해 주입된 OAuth2AttributeMapper 구현체 목록
      */
     public OAuth2AttributeMapperRegistry(List<OAuth2AttributeMapper> mappers) {
         log.info("OAuth2AttributeMapperRegistry > mappers: {}", mappers);
